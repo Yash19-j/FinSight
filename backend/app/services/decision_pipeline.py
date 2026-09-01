@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 
 from .decision_optimizer import DecisionOptimizer
+from .policy_engine import PolicyEngine
 from .financial_state import FinancialStateEngine
 from .risk_detector import RiskDetector
 from .root_cause import RootCauseEngine
@@ -193,6 +194,71 @@ class DecisionPipeline:
             )
         return baselines[0], interventions
 
+    @staticmethod
+    def _resolve_recommended_scenario(
+        decision: Dict[str, object],
+        scenario_results: Sequence[Dict[str, object]],
+    ) -> Dict[str, object]:
+        """Resolve the optimizer's selected ID to the authoritative scenario result."""
+        recommended = decision.get("recommended_scenario")
+        if not isinstance(recommended, dict):
+            raise RuntimeError(
+                "Decision pipeline cannot resolve the recommended scenario: "
+                "recommended_scenario must be a dictionary."
+            )
+
+        scenario_id = recommended.get("scenario_id")
+        if not isinstance(scenario_id, str) or not scenario_id.strip():
+            raise RuntimeError(
+                "Decision pipeline cannot resolve the recommended scenario: "
+                "recommended_scenario.scenario_id is missing or invalid."
+            )
+
+        matches = [
+            result
+            for result in scenario_results
+            if result.get("scenario_id") == scenario_id
+        ]
+        if not matches:
+            raise RuntimeError(
+                f"Decision pipeline could not resolve recommended scenario_id "
+                f"'{scenario_id}' from ScenarioEngine results."
+            )
+        if len(matches) > 1:
+            raise RuntimeError(
+                f"Decision pipeline found multiple ScenarioEngine results for "
+                f"recommended scenario_id '{scenario_id}'."
+            )
+
+        # Return a copy so downstream policy evaluation cannot mutate the
+        # authoritative ScenarioEngine result held by the pipeline.
+        return dict(matches[0])
+
+    def _evaluate_policy(
+        self,
+        decision: Dict[str, object],
+        scenario_results: Sequence[Dict[str, object]],
+        data_confidence: str,
+    ) -> Dict[str, object]:
+        """Evaluate the selected scenario using its authoritative assumptions."""
+        authoritative_scenario = self._resolve_recommended_scenario(
+            decision,
+            scenario_results,
+        )
+
+        policy_decision = dict(decision)
+        policy_decision["recommended_scenario"] = authoritative_scenario
+
+        try:
+            return PolicyEngine(
+                decision=policy_decision,
+                data_confidence=data_confidence,
+            ).evaluate()
+        except Exception as exc:
+            raise RuntimeError(
+                f"Decision pipeline failed during policy evaluation: {exc}"
+            ) from exc
+
     def run(self) -> Dict[str, object]:
         """Run the complete FinSight decision pipeline and return one result."""
         self._validate_configuration()
@@ -240,12 +306,19 @@ class DecisionPipeline:
                 f"Decision pipeline failed during decision optimization: {exc}"
             ) from exc
 
+        policy = self._evaluate_policy(
+            decision,
+            scenario_results,
+            confidence,
+        )
+
         result: Dict[str, object] = {
             "financial_state": state,
             "risks": risks,
             "root_causes": root_causes,
             "scenarios": scenario_results,
             "decision": decision,
+            "policy": policy,
             "metadata": {
                 "simulation_runs": int(self.simulation_runs),
                 "horizon_months": int(self.horizon_months),
