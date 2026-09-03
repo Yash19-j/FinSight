@@ -1,406 +1,656 @@
-FinSight
+# FinSight
 
-Financial Decision Intelligence with a Safety-Gated Action Layer
+### Financial Decision Intelligence with a Safety-Gated Action Layer
 
-FinSight is a financial decision intelligence system that turns financial data into ranked, simulated, policy-constrained actions.
+> **FinSight doesn't just tell you what looks best. It decides whether that action is safe enough to take.**
 
-Its core principle is simple:
+FinSight is a financial decision-intelligence prototype that transforms financial data into **ranked, simulated, policy-constrained actions**.
 
-The best financial action is not always a safe action.
+The core idea is simple:
 
-Instead of stopping at risk detection or generating an unrestricted recommendation, FinSight evaluates possible interventions, estimates their financial consequences, applies explicit safety and policy constraints, and only creates an executable action when the intervention passes the safety gate.
+> **The best financial action is not always a safe action.**
 
-Why FinSight?
+Instead of stopping at dashboards, risk alerts, or unrestricted AI recommendations, FinSight creates a controlled decision pipeline:
 
-Modern businesses increasingly automate finance operations, but financial decisions have an important asymmetry:
+**Observe → Detect → Simulate → Rank → Safety Gate → Act → Verify**
 
-A wrong automated action can make an already fragile financial position worse.
+---
 
-For example, an intervention may improve projected ending cash while leaving the probability of cash shortfall unchanged. A naive optimizer could still execute it because it is "better than baseline."
+## 1. Why FinSight?
 
-FinSight separates two questions:
+Financial automation has an important asymmetry:
 
-Which intervention performs best in simulation?
+> **A bad automated financial decision can make an already fragile situation worse.**
 
-Is that intervention safe enough to execute?
+Imagine a company with rapidly increasing expenses and limited liquidity.
 
-Only the second question can authorize execution.
+An optimizer might discover an intervention that:
 
-This creates a decision boundary between optimization and action.
+- improves projected ending cash by approximately **₹11.57 lakh**
+- improves projected downside by approximately **₹11.6 lakh**
+- delays projected failure by approximately **0.97 months**
 
-System Architecture
+It may therefore look like the "best" option.
 
-                    ┌─────────────────────────────┐
-                    │     FINANCIAL INPUT DATA    │
-                    │                             │
-                    │ Cash • Revenue • Expenses   │
-                    │ Historical Financial Data   │
-                    └──────────────┬──────────────┘
-                                   │
-                                   ▼
-                    ┌─────────────────────────────┐
-                    │   FINANCIAL STATE ENGINE    │
-                    │                             │
-                    │ Burn Rate                   │
-                    │ Runway                      │
-                    │ Growth / Expense Trends     │
-                    │ Financial Ratios            │
-                    │ Data Confidence              │
-                    └──────────────┬──────────────┘
-                                   │
-                                   ▼
-                    ┌─────────────────────────────┐
-                    │       RISK DETECTOR         │
-                    │                             │
-                    │ Liquidity Risk              │
-                    │ Operating Deficit           │
-                    │ Expense Acceleration        │
-                    │ Growth Instability          │
-                    └──────────────┬──────────────┘
-                                   │
-                                   ▼
-                    ┌─────────────────────────────┐
-                    │   DETECTED DRIVER ENGINE    │
-                    │                             │
-                    │ Identifies financial        │
-                    │ signals contributing to      │
-                    │ detected risks              │
-                    └──────────────┬──────────────┘
-                                   │
-                                   ▼
-                    ┌─────────────────────────────┐
-                    │      SCENARIO ENGINE        │
-                    │                             │
-                    │ Baseline                    │
-                    │ Revenue Growth              │
-                    │ Expense Reduction           │
-                    │ Combined                    │
-                    │                             │
-                    │ Monte Carlo Simulation      │
-                    └──────────────┬──────────────┘
-                                   │
-                                   ▼
-                    ┌─────────────────────────────┐
-                    │    DECISION OPTIMIZER       │
-                    │                             │
-                    │ Survival                   │
-                    │ Downside Risk              │
-                    │ Ending Cash                │
-                    │ Survival Horizon            │
-                    │                             │
-                    │ → Rank interventions        │
-                    └──────────────┬──────────────┘
-                                   │
-                                   ▼
-              ┌────────────────────────────────────────┐
-              │       POLICY + SAFETY GATE             │
-              │                                        │
-              │  Policy Limits                         │
-              │  Confidence                            │
-              │  Capital Constraints                   │
-              │  Cash-Shortfall Safety Check           │
-              └───────────────┬────────────────────────┘
-                              │
-                    ┌─────────┴──────────┐
-                    │                    │
-                 SAFE                  UNSAFE
-                    │                    │
-                    ▼                    ▼
-       ┌─────────────────────┐   ┌─────────────────────┐
-       │   ACTION EXECUTOR   │   │   ACTION BLOCKED    │
-       │                     │   │                     │
-       │ Create bounded      │   │ No executable       │
-       │ action              │   │ action created      │
-       │                     │   │                     │
-       │ DRY_RUN             │   │ Reason recorded     │
-       └──────────┬──────────┘   └─────────────────────┘
+But if the probability of cash shortfall remains **100%**, should an autonomous system execute it?
+
+**FinSight says no.**
+
+It deliberately separates two questions:
+
+| Question | Component |
+|---|---|
+| **What performs best in simulation?** | Decision Optimizer |
+| **Is it safe enough to execute?** | Safety + Policy Gate |
+
+This creates a deliberate **decision boundary between financial intelligence and financial action**.
+
+---
+
+# 2. What FinSight Does
+
+FinSight takes financial history and builds an operating picture of the business.
+
+It then:
+
+1. **Builds financial state**
+2. **Detects financial risks**
+3. **Surfaces detected drivers**
+4. **Generates intervention scenarios**
+5. **Simulates financial trajectories**
+6. **Ranks interventions**
+7. **Applies policy and safety constraints**
+8. **Creates only bounded actions that pass**
+9. **Verifies execution integrity**
+10. **Maintains an auditable decision trail**
+
+### The core flow
+
+```text
+                 FINANCIAL DATA
+                       │
+                       ▼
+              ┌─────────────────┐
+              │ Financial State  │
+              └────────┬────────┘
+                       ▼
+              ┌─────────────────┐
+              │  Risk Detector  │
+              └────────┬────────┘
+                       ▼
+              ┌─────────────────┐
+              │ Detected Drivers│
+              └────────┬────────┘
+                       ▼
+              ┌─────────────────┐
+              │ Scenario Engine │
+              └────────┬────────┘
+                       ▼
+              ┌──────────────────┐
+              │ Decision Optimizer│
+              └────────┬─────────┘
+                       ▼
+              ┌─────────────────┐
+              │ SAFETY + POLICY │
+              │      GATE       │
+              └───────┬─────────┘
+                      / \
+                     /   \
+                  SAFE   UNSAFE
+                   │       │
+                   ▼       ▼
+                 ACTION   BLOCK
+                   │
+                   ▼
+                VERIFY
+                   │
+                   ▼
+               AUDIT TRAIL
+```
+
+---
+
+# 3. System Architecture
+
+```text
+┌──────────────────────────────────────────────────────────┐
+│                    FINANCIAL INPUTS                      │
+│                                                          │
+│  Cash • Revenue • Expenses • Historical Financial Data  │
+└──────────────────────────┬───────────────────────────────┘
+                           │
+                           ▼
+┌──────────────────────────────────────────────────────────┐
+│                 FINANCIAL STATE ENGINE                   │
+│                                                          │
+│ Burn Rate • Runway • Growth • Expense Trends • Ratios   │
+│                     Data Confidence                      │
+└──────────────────────────┬───────────────────────────────┘
+                           │
+                           ▼
+┌──────────────────────────────────────────────────────────┐
+│                     RISK DETECTOR                         │
+│                                                          │
+│ Liquidity Risk • Operating Deficit                       │
+│ Expense Acceleration • Growth Instability                │
+└──────────────────────────┬───────────────────────────────┘
+                           │
+                           ▼
+┌──────────────────────────────────────────────────────────┐
+│                  DETECTED DRIVER ENGINE                   │
+│                                                          │
+│ Surfaces financial signals associated with detected risk │
+└──────────────────────────┬───────────────────────────────┘
+                           │
+                           ▼
+┌──────────────────────────────────────────────────────────┐
+│                     SCENARIO ENGINE                      │
+│                                                          │
+│ Baseline • Revenue Growth • Expense Reduction • Combined │
+│                 Monte Carlo Simulation                   │
+└──────────────────────────┬───────────────────────────────┘
+                           │
+                           ▼
+┌──────────────────────────────────────────────────────────┐
+│                  DECISION OPTIMIZER                      │
+│                                                          │
+│ Survival • Downside • Ending Cash • Survival Horizon     │
+│                    → Rank Actions                        │
+└──────────────────────────┬───────────────────────────────┘
+                           │
+                           ▼
+┌──────────────────────────────────────────────────────────┐
+│                 POLICY + SAFETY GATE                     │
+│                                                          │
+│ Policy Limits • Confidence • Capital Constraints          │
+│              Cash-Shortfall Safety Check                 │
+└──────────────────────────┬───────────────────────────────┘
+                           │
+                 ┌─────────┴─────────┐
+                 ▼                   ▼
+              ┌──────┐           ┌───────┐
+              │ SAFE │           │UNSAFE │
+              └───┬──┘           └───┬───┘
+                  ▼                  ▼
+           ACTION EXECUTOR        BLOCK
+                  │                  │
+                  ▼                  ▼
+              DRY_RUN          NO ACTION
                   │
                   ▼
-       ┌─────────────────────┐
-       │  OUTCOME VERIFIER   │
-       │                     │
-       │ Execution integrity │
-       │ Verification        │
-       │                     │
-       │ Does NOT fabricate  │
-       │ financial outcomes  │
-       └──────────┬──────────┘
+           OUTCOME VERIFIER
                   │
                   ▼
-       ┌─────────────────────┐
-       │     AUDIT TRAIL     │
-       │                     │
-       │ Decision • Policy   │
-       │ Action • Execution  │
-       │ Verification        │
-       └─────────────────────┘
+             AUDIT TRAIL
+```
 
-Decision Boundary
+---
 
-                     BEST AVAILABLE ACTION
-                              │
-                              ▼
-                 ┌─────────────────────────┐
-                 │   FINANCIAL SAFETY GATE │
-                 └────────────┬────────────┘
-                              │
-                    ┌─────────┴─────────┐
-                    ▼                   ▼
-                  SAFE                UNSAFE
-                    │                   │
-                    ▼                   ▼
-                 EXECUTE              BLOCK
-                    │                   │
-                    ▼                   ▼
-                 VERIFY             NO ACTION
+# 4. The Decision Boundary
 
-The optimizer and the safety gate intentionally have different responsibilities.
+This is the central architectural idea behind FinSight.
 
-Optimizer: "What looks best?"
+```text
+              BEST AVAILABLE ACTION
+                       │
+                       ▼
+             ┌────────────────────┐
+             │ FINANCIAL SAFETY   │
+             │       GATE         │
+             └─────────┬──────────┘
+                       │
+                 ┌─────┴─────┐
+                 ▼           ▼
+               SAFE        UNSAFE
+                 │           │
+                 ▼           ▼
+              EXECUTE       BLOCK
+                 │           │
+                 ▼           ▼
+              VERIFY      NO ACTION
+```
 
-Safety gate: "What is safe enough to do?"
+The optimizer and safety gate have **different responsibilities**.
 
-Core Pipeline
+### Decision Optimizer
 
-1. Financial State
+> **"What looks best?"**
 
-The system converts raw financial inputs into an operating state including:
+Ranks interventions using multiple financial dimensions.
 
-Current cash
+### Safety Gate
 
-Monthly revenue
+> **"What is safe enough to do?"**
 
-Monthly expenses
+Determines whether the selected intervention satisfies explicit financial and policy constraints.
 
-Net burn
+This prevents the system from turning:
 
-Average net burn
+**"better than baseline"**
 
-Runway
+into:
 
-Revenue growth
+**"safe to automate."**
 
-Expense growth
+---
 
-Revenue-to-expense ratio
+# 5. Core Pipeline
 
-Burn multiple
+## 1. Financial State
 
-Data confidence
+Raw financial inputs are converted into an operating state containing:
 
-2. Risk Detection
+- Current cash
+- Monthly revenue
+- Monthly expenses
+- Net burn
+- Average net burn
+- Runway
+- Revenue growth
+- Expense growth
+- Revenue-to-expense ratio
+- Burn multiple
+- Data confidence
 
-FinSight evaluates financial conditions and surfaces risks such as:
+---
 
-Operating deficit
+## 2. Risk Detection
 
-Liquidity pressure
+FinSight evaluates the financial state for conditions including:
 
-Expense acceleration
+- Operating deficit
+- Liquidity pressure
+- Expense acceleration
+- Growth instability
 
-Growth instability
+Risks are surfaced with severity so that downstream decisions can prioritize them.
 
-3. Detected Drivers
+---
+
+## 3. Detected Drivers
 
 The system surfaces the financial signals associated with detected risks.
 
-FinSight deliberately avoids claiming granular causal attribution when the available dataset does not contain granular operational categories.
+FinSight deliberately avoids pretending to know granular causal explanations when the input data does not contain granular operational categories.
 
-4. Scenario Simulation
+> **No invented causality.**
+
+---
+
+## 4. Scenario Simulation
 
 Candidate interventions are evaluated against a baseline.
 
-Current intervention classes include:
+Current intervention classes:
 
-Baseline
+| Scenario | Purpose |
+|---|---|
+| **Baseline** | No intervention |
+| **Revenue Growth** | Improve revenue trajectory |
+| **Expense Reduction** | Reduce expense trajectory |
+| **Combined** | Apply both interventions |
 
-Revenue growth
+The scenario engine simulates financial trajectories across the planning horizon.
 
-Expense reduction
+Key outputs include:
 
-Combined intervention
+- Ending cash
+- P10 downside
+- Survival probability
+- Survival horizon
+- Cash-shortfall probability
 
-The scenario engine simulates financial trajectories over the planning horizon and measures outcomes such as:
+---
 
-Ending cash
+## 5. Decision Optimization
 
-P10 downside
-
-Survival probability
-
-Survival horizon
-
-Cash-shortfall probability
-
-5. Decision Optimization
-
-Scenarios are ranked using multiple financial dimensions rather than a single metric.
+FinSight does not optimize against a single metric.
 
 The current optimizer considers:
 
+```text
 Survival
-
+   +
 Downside
+   +
+Ending Cash
+   +
+Survival Horizon
+   ↓
+Decision Score
+```
 
-Ending cash
+This produces a ranked set of available interventions.
 
-Survival horizon
+---
 
-A decision score is produced to rank the available interventions.
+# 6. Policy + Financial Safety Gate
 
-6. Policy + Financial Safety Gate
+After optimization, the selected intervention is evaluated against explicit constraints.
 
-The selected intervention then passes through explicit policy constraints.
+The safety layer considers:
 
-The financial safety gate is particularly important when the baseline has material cash-shortfall risk.
+- Policy limits
+- Data confidence
+- Capital requirements
+- Financial safety conditions
+- Cash-shortfall risk
 
-If the selected intervention does not reduce the probability of cash shortfall, FinSight can block the action even when the optimizer considers it financially better than baseline.
+### Critical safety rule
 
-7. Action Execution
+When the baseline has material cash-shortfall risk:
+
+> **If the selected intervention does not reduce the probability of cash shortfall, the action can be blocked.**
+
+This is the control boundary between:
+
+**financial intelligence**
+
+and
+
+**financial automation.**
+
+---
+
+# 7. Action Execution
 
 Only an approved decision can produce an executable action.
 
-The current prototype supports bounded DRY_RUN execution.
+The current prototype uses:
 
-8. Outcome Verification
+```text
+DRY_RUN
+```
 
-The verifier checks execution integrity.
+Actions are bounded by the policy layer rather than being unrestricted autonomous operations.
 
-It does not claim that a simulated financial improvement became real-world recovered money.
+---
 
-This distinction prevents the system from confusing:
+# 8. Outcome Verification
 
-simulated outcome
+FinSight verifies **execution integrity**, not imaginary business outcomes.
 
-with
+This distinction is important:
 
-observed business outcome.
+```text
+SIMULATED OUTCOME
+       ≠
+OBSERVED BUSINESS OUTCOME
+```
 
-Safety Example
+A successful dry-run does **not** mean money was actually recovered or that the business actually improved.
 
-The stressed-case prototype demonstrates why the safety layer exists.
+FinSight intentionally refuses to fabricate that claim.
 
-The optimizer identifies Combined as the best available intervention:
+---
 
-Decision score: 53.7
+# 9. Safety Demonstration
 
-Mean ending-cash improvement: approximately ₹11.57 lakh
+The stressed-case prototype demonstrates why the safety gate exists.
 
-P10 improvement: approximately ₹11.6 lakh
+### Optimizer result
 
-Survival horizon improvement: approximately 0.97 months
+The optimizer identifies **Combined** as the best available intervention:
 
-However:
+| Metric | Improvement |
+|---|---:|
+| Decision score | **53.7** |
+| Mean ending cash | **+₹11.57 lakh** |
+| P10 downside | **~+₹11.6 lakh** |
+| Survival horizon | **+0.97 months** |
 
-Baseline cash-shortfall probability: 100%
+At first glance, this looks like the obvious action.
 
-Selected intervention cash-shortfall probability: 100%
+But:
+
+```text
+Baseline shortfall probability
+              ↓
+             100%
+
+Selected intervention shortfall probability
+              ↓
+             100%
+```
 
 Therefore:
 
-Optimizer
-    ↓
-Combined is best available
-    ↓
-Safety Gate
-    ↓
-Shortfall risk remains 100%
-    ↓
-BLOCK
-    ↓
+```text
+        OPTIMIZER
+            │
+            ▼
+ Combined is best available
+            │
+            ▼
+       SAFETY GATE
+            │
+            ▼
+ Shortfall risk remains 100%
+            │
+            ▼
+          BLOCK
+            │
+            ▼
+   NO EXECUTABLE ACTION
+```
+
+### This is intentional.
+
+FinSight prefers:
+
+> **No action**
+
+over:
+
+> **an action that looks better but remains financially unsafe.**
+
+---
+
+# 10. Prototype Validation
+
+The backend currently has an automated test suite covering:
+
+- Financial state calculations
+- Risk detection
+- Scenario simulation
+- Decision optimization
+- Policy evaluation
+- Safety gating
+- Action creation
+- Action execution
+- Outcome verification
+- End-to-end decision pipeline
+
+### Current validation baseline
+
+# **355 tests passing**
+
+The prototype has also been validated across both healthy and stressed financial states.
+
+###  Healthy financial state
+
+```text
+Risk assessment
+      ↓
+Scenario evaluation
+      ↓
+Policy PASS
+      ↓
+Action created
+      ↓
+DRY_RUN execution
+      ↓
+Execution verified
+```
+
+###  Stressed financial state
+
+```text
+Risk assessment
+      ↓
+Scenario evaluation
+      ↓
+Best available intervention
+      ↓
+Safety gate FAIL
+      ↓
+ACTION BLOCKED
+      ↓
 NO EXECUTABLE ACTION
+```
 
-This is intentional behavior.
+---
 
-"Better than baseline" is not equivalent to "safe to automate."
+# 11. Where This Architecture Can Be Useful
 
-Industry Relevance
+##  Payment & Transaction Businesses
 
-Financial operations are moving toward increasingly automated decision workflows: monitoring, forecasting, prioritization, collections, treasury operations, payment operations, and business controls.
+High transaction volumes create a need to continuously identify financial pressure and prioritize interventions without allowing risky decisions to propagate automatically.
 
-The challenge is not simply making these systems more autonomous.
+---
 
-The harder problem is making autonomy bounded, measurable, and financially defensible.
+##  SMBs & Merchants
 
-FinSight addresses that layer.
+Smaller businesses often operate with tighter liquidity buffers.
 
-Where the approach can be useful
+An intervention that looks positive under average-case projections may still be dangerous if downside cash risk remains high.
 
-Payment & transaction businesses
+---
 
-Large transaction volumes create a need to continuously identify financial pressure and prioritize interventions without allowing risky actions to propagate automatically.
+##  Finance Operations
 
-SMBs and merchants
+Move from:
 
-Smaller businesses often operate with tighter liquidity buffers. A recommendation that looks positive on an average-case forecast may still be dangerous if downside cash risk remains high.
-
-Finance operations
-
-Finance teams can use scenario-based decision support to move from:
-
-"Here is the problem"
+> **"Here is the problem."**
 
 to:
 
-"Here are the available interventions, their simulated consequences, and the safest action we can authorize."
+> **"Here are the available interventions, their simulated consequences, and the safest action we can authorize."**
 
-Agentic finance systems
+---
 
-As finance workflows become more autonomous, a separate safety layer can act as a control boundary between an AI/optimization system and actions that affect money, cash position, or business operations.
+##  Agentic Finance
 
-Relevance to Payment-Finance Platforms
+As financial workflows become increasingly autonomous, FinSight provides a control layer between:
 
-FinSight is designed around a problem that naturally appears in payment and financial infrastructure:
+```text
+AI / Optimization
+        ↓
+Decision
+        ↓
+Safety + Policy
+        ↓
+Authorized Action
+```
 
-Turning financial signals into bounded actions while preserving control over financial risk.
+This allows autonomy without making the system blindly autonomous.
 
-A payment-finance platform can potentially have access to high-frequency operational and financial signals across merchants and businesses. That creates an opportunity for decision systems that do more than surface dashboards.
+---
 
-The architecture is intentionally compatible with workflows where a platform can:
+# 12. Relevance to Payment-Finance Platforms
 
-Observe financial signals.
+FinSight is designed around a problem naturally present in payment and financial infrastructure:
 
-Detect deterioration.
+> **Turning financial signals into bounded actions while preserving control over financial risk.**
 
-Simulate possible interventions.
+A payment-finance platform can potentially observe high-frequency operational and financial signals across merchants and businesses.
 
-Quantify downside.
+That creates an opportunity to move beyond:
 
-Apply business and safety policies.
+```text
+DATA
+ ↓
+DASHBOARD
+ ↓
+ALERT
+```
 
-Execute only approved actions.
+toward:
 
-Verify execution and maintain an audit trail.
+```text
+DATA
+ ↓
+DETECT
+ ↓
+SIMULATE
+ ↓
+QUANTIFY DOWNSIDE
+ ↓
+APPLY POLICY
+ ↓
+AUTHORIZE
+ ↓
+ACT
+ ↓
+VERIFY
+```
 
-This makes the system relevant to payment operations, merchant financial health, cash-flow decisioning, and automated finance workflows without depending on a single narrow use case.
+Potential application areas include:
 
-The important design principle is the control boundary:
+- Merchant financial health
+- Cash-flow decisioning
+- Payment operations
+- Finance automation
+- Business controls
+- Treasury decision support
 
-Financial intelligence can recommend. Policy decides whether automation is allowed.
+The architecture does **not** depend on one narrow workflow.
 
-What FinSight Does NOT Claim
+The central principle remains:
 
-FinSight is a prototype decision-intelligence system.
+> **Financial intelligence can recommend. Policy decides whether automation is allowed.**
 
-It does not claim:
+---
 
-Real-world financial recovery from simulation alone.
+# 13. Why This Is Different
 
-Guaranteed financial outcomes.
+Traditional financial analytics often stop at:
 
-Granular causal attribution when the input data does not support it.
+```text
+Data → Dashboard → Insight
+```
 
-Unrestricted autonomous financial actions.
+Recommendation systems may go one step further:
 
-That the highest-scoring scenario is automatically safe.
+```text
+Data → Insight → Recommendation
+```
 
-That dry-run execution represents an actual external transaction.
+FinSight introduces another layer:
 
-These limitations are intentional. They make the decision system easier to evaluate and audit.
+```text
+Data
+ ↓
+Insight
+ ↓
+Simulation
+ ↓
+Optimization
+ ↓
+Safety
+ ↓
+Action
+ ↓
+Verification
+```
 
-Repository Structure
+The difference is not simply adding another model.
 
+It is establishing a **control boundary around automation**.
+
+The system can identify a potentially attractive action while simultaneously deciding:
+
+> **"This is the best option we found, but we are not allowed to execute it."**
+
+That is a first-class system outcome, not an error state.
+
+---
+
+# 14. Repository Structure
+
+```text
 FinSight/
+│
 ├── backend/
 │   ├── app/
 │   │   ├── models/
@@ -426,68 +676,240 @@ FinSight/
 │   │
 │   └── tests/
 │
-└── frontend/
-    └── React + TypeScript dashboard
+├── frontend/
+│   └── React + TypeScript dashboard
+│
+├── sample_data/
+│   ├── demo_startup.csv
+│   └── failing_startup.csv
+│
+└── README.md
+```
 
-Testing
+---
 
-The backend currently has a comprehensive automated test suite covering:
+# 15. Testing
 
-Financial state calculations
+Run the complete backend test suite:
 
-Risk detection
+```bash
+pytest -q
+```
 
-Scenario simulation
+Expected validation baseline:
 
-Decision optimization
+```text
+355 passed
+```
 
-Policy evaluation
+The suite covers the major decision layers:
 
-Safety gating
+```text
+Financial State
+      ↓
+Risk Detection
+      ↓
+Scenario Simulation
+      ↓
+Decision Optimization
+      ↓
+Policy Evaluation
+      ↓
+Safety Gate
+      ↓
+Action
+      ↓
+Execution
+      ↓
+Verification
+```
 
-Action creation
+---
 
-Action execution
+# 16. Getting Started
 
-Outcome verification
+## Prerequisites
 
-End-to-end decision pipeline
+- Python 3.10+
+- Node.js 18+
+- npm
 
-Current validation baseline:
+---
 
-355 tests passing.
+## Backend
 
-The stressed-case safety behavior and healthy-case execution path have also been validated end-to-end.
+From the project root:
 
-Design Philosophy
+```bash
+pip install -r requirements.txt
+```
 
-FinSight follows five principles:
+Start the API:
 
-1. Quantify before acting
+```bash
+uvicorn backend.app.main:app --reload
+```
 
-Don't execute because an intervention sounds reasonable. Simulate its financial consequences first.
+The API will be available at:
 
-2. Optimize separately from authorization
+```text
+http://localhost:8000
+```
 
-The mathematically best available option is not automatically an authorized action.
+### Health check
 
-3. Make safety measurable
+```text
+GET /health
+```
+
+### Demo
+
+```text
+GET /demo
+```
+
+### Analysis
+
+```text
+POST /analyze
+```
+
+---
+
+## Frontend
+
+Open a second terminal:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+The dashboard will be available at:
+
+```text
+http://localhost:5173
+```
+
+The Vite development server proxies `/api` requests to the FastAPI backend.
+
+---
+
+# 17. Future Direction
+
+The current prototype establishes the decision-control architecture.
+
+Future iterations can extend it with:
+
+- More intervention types
+- Richer financial datasets
+- Merchant-level financial signals
+- Real observed outcome feedback
+- Human approval workflows
+- More granular policy controls
+- Continuous decision monitoring
+- Learning from verified outcomes
+- Integration with payment and finance infrastructure
+
+The important constraint remains:
+
+> **Additional automation should extend the system without removing the safety boundary.**
+
+---
+
+# 18. Design Philosophy
+
+FinSight is built around five principles.
+
+### 01 , Quantify before acting
+
+Don't execute because an intervention sounds reasonable.
+
+**Simulate its financial consequences first.**
+
+### 02 , Optimize separately from authorization
+
+The mathematically best option is not automatically an authorized action.
+
+### 03 , Make safety measurable
 
 Safety decisions should be based on explicit financial conditions and constraints.
 
-4. Fail closed
+### 04 , Fail closed
 
-When an intervention cannot satisfy the safety requirements, create no executable action.
+If an intervention cannot satisfy the safety requirements:
 
-5. Never confuse simulation with reality
+**create no executable action.**
 
-A simulated improvement is evidence for a decision—not proof of an actual financial outcome.
+### 05 , Never confuse simulation with reality
 
-One-line summary
+A simulated improvement is evidence for a decision.
 
-FinSight is a safety-gated financial decision engine that turns financial signals into simulated, policy-constrained actions—and knows when not to act.
+It is **not proof of an actual financial outcome.**
 
-License
+---
+
+# 19. What FinSight Does NOT Claim
+
+FinSight is a prototype decision-intelligence system.
+
+It does **not** claim:
+
+- Real-world financial recovery from simulation alone
+- Guaranteed financial outcomes
+- Granular causal attribution when the input data cannot support it
+- Unrestricted autonomous financial actions
+- That the highest-scoring scenario is automatically safe
+- That dry-run execution represents an actual external transaction
+
+These limitations are intentional.
+
+They make the system easier to:
+
+**evaluate → audit → trust**
+
+---
+
+# 20. Final Takeaway
+
+Financial automation should not be designed around:
+
+> **"Can the system make a decision?"**
+
+It should also answer:
+
+> **"Should the system be allowed to act on that decision?"**
+
+FinSight is built around that second question.
+
+```text
+                    FINANCIAL INTELLIGENCE
+                             │
+                             ▼
+                        RECOMMEND
+                             │
+                             ▼
+                    ┌─────────────────┐
+                    │  SAFETY GATE    │
+                    └────────┬────────┘
+                             │
+                    ┌────────┴────────┐
+                    ▼                 ▼
+                  SAFE             UNSAFE
+                    │                 │
+                    ▼                 ▼
+                 ACTION              BLOCK
+                    │
+                    ▼
+                 VERIFY
+```
+
+> **FinSight is a safety-gated financial decision engine that turns financial signals into simulated, policy-constrained actions , and knows when not to act.**
+
+---
+
+## License
 
 Copyright (c) 2026 Yash Jindal
 
@@ -497,6 +919,6 @@ This project, including its source code, documentation, design, and associated m
 
 No permission is granted to copy, modify, distribute, sublicense, or use this project or substantial portions of its source code for commercial or derivative purposes without prior written permission from the copyright holder.
 
-Third-party libraries, frameworks, datasets, and other external components remain subject to their respective licenses.
+Third-party libraries, frameworks, datasets, and external components remain subject to their respective licenses.
 
 For permission requests, please contact the repository owner.
