@@ -1,0 +1,2430 @@
+/* =========================================================
+   FinSight — Visual Upgrade Layer
+   Financial-terminal feel + restrained motion.
+   This file sits on top of App.css and does not replace it.
+   ========================================================= */
+
+:root {
+  --fs-grid: rgba(137, 160, 188, 0.055);
+}
+
+/* ---------------------------------------------------------
+   1. FINANCIAL TERMINAL BACKGROUND
+   --------------------------------------------------------- */
+
+.app-shell {
+  background-image:
+    linear-gradient(var(--fs-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--fs-grid) 1px, transparent 1px),
+    radial-gradient(
+      circle at 78% 5%,
+      rgba(119, 224, 173, 0.055),
+      transparent 24%
+    );
+  background-size: 56px 56px, 56px 56px, auto;
+}
+
+.main-content {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Very subtle moving scanline */
+.main-content::before {
+  content: "";
+  position: fixed;
+  top: 82px;
+  right: 0;
+  width: 42vw;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(119, 224, 173, 0.28),
+    transparent
+  );
+  pointer-events: none;
+  animation: scanline 7s ease-in-out infinite;
+  z-index: 20;
+}
+
+
+/* ---------------------------------------------------------
+   2. HERO — MAKE IT FEEL LIKE A FINANCIAL TERMINAL
+   --------------------------------------------------------- */
+
+.hero {
+  isolation: isolate;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.16);
+}
+
+/* Abstract financial trajectory behind hero */
+.hero::before {
+  content: "";
+  position: absolute;
+  right: -2%;
+  bottom: 18px;
+  width: 57%;
+  height: 72%;
+  opacity: 0.75;
+
+  background:
+    linear-gradient(
+      145deg,
+      transparent 0 19%,
+      rgba(119, 224, 173, 0.02) 20% 21%,
+      transparent 22%
+    ),
+    linear-gradient(
+      160deg,
+      transparent 0 39%,
+      rgba(119, 224, 173, 0.10) 40% 41%,
+      transparent 42%
+    ),
+    linear-gradient(
+      173deg,
+      transparent 0 57%,
+      rgba(139, 174, 219, 0.09) 58% 59%,
+      transparent 60%
+    );
+
+  clip-path: polygon(
+    0 76%,
+    8% 67%,
+    17% 71%,
+    27% 48%,
+    36% 54%,
+    46% 31%,
+    57% 39%,
+    67% 22%,
+    77% 28%,
+    88% 8%,
+    100% 13%,
+    100% 100%,
+    0 100%
+  );
+
+  border-bottom: 1px solid rgba(119, 224, 173, 0.12);
+
+  transform-origin: bottom right;
+
+  animation:
+    chart-rise 1.4s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+
+  pointer-events: none;
+  z-index: 0;
+}
+
+.hero-decision {
+  box-shadow:
+    inset 0 1px rgba(255, 255, 255, 0.025),
+    0 14px 40px rgba(0, 0, 0, 0.18);
+
+  transition:
+    transform 0.25s ease,
+    border-color 0.25s ease;
+}
+
+.hero-decision:hover {
+  transform: translateY(-2px);
+  border-color: rgba(119, 224, 173, 0.25);
+}
+
+
+/* ---------------------------------------------------------
+   3. PAGE ENTRANCE
+   --------------------------------------------------------- */
+
+.page > * {
+  animation:
+    fs-enter 0.55s cubic-bezier(0.2, 0.75, 0.2, 1) both;
+}
+
+.page > *:nth-child(2) {
+  animation-delay: 0.05s;
+}
+
+.page > *:nth-child(3) {
+  animation-delay: 0.10s;
+}
+
+.page > *:nth-child(4) {
+  animation-delay: 0.15s;
+}
+
+
+/* ---------------------------------------------------------
+   4. METRIC CARDS
+   --------------------------------------------------------- */
+
+.metric-card {
+  position: relative;
+  overflow: hidden;
+
+  transition:
+    transform 0.22s ease,
+    border-color 0.22s ease,
+    background 0.22s ease;
+}
+
+/* Small financial signal at bottom of card */
+.metric-card::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      var(--accent),
+      transparent
+    );
+
+  opacity: 0.25;
+
+  transform: scaleX(0.15);
+
+  transition:
+    transform 0.3s ease;
+}
+
+.metric-card:hover {
+  transform: translateY(-3px);
+  border-color: #2b394a;
+  background: #101722;
+}
+
+.metric-card:hover::after {
+  transform: scaleX(1);
+}
+
+/* Financial numbers align like instruments */
+.metric-card > strong,
+.position-value strong,
+.big-count,
+.impact-metric-card strong,
+.safety-result strong {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+
+/* ---------------------------------------------------------
+   5. SCENARIO CARDS
+   --------------------------------------------------------- */
+
+.scenario-grid {
+  perspective: 900px;
+}
+
+.scenario-card {
+  position: relative;
+  overflow: hidden;
+
+  transition:
+    transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1),
+    border-color 0.28s ease,
+    background 0.28s ease;
+}
+
+/* Light sweep */
+.scenario-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+
+  background:
+    linear-gradient(
+      115deg,
+      transparent 35%,
+      rgba(255, 255, 255, 0.025) 50%,
+      transparent 65%
+    );
+
+  transform: translateX(-120%);
+
+  transition:
+    transform 0.55s ease;
+
+  pointer-events: none;
+}
+
+.scenario-card:hover {
+  transform:
+    translateY(-5px)
+    rotateX(1deg);
+
+  border-color: #304054;
+  background: #101722;
+}
+
+.scenario-card:hover::before {
+  transform: translateX(120%);
+}
+
+.recommended-tag {
+  box-shadow:
+    0 0 22px rgba(119, 224, 173, 0.08);
+}
+
+
+/* ---------------------------------------------------------
+   6. DECISION REPLAY / REASONING TIMELINE
+   --------------------------------------------------------- */
+
+.reasoning-panel {
+  position: relative;
+}
+
+.reasoning-list {
+  position: relative;
+}
+
+/* Vertical decision path */
+.reasoning-list::before {
+  content: "";
+  position: absolute;
+
+  left: 11px;
+  top: 12px;
+  bottom: 12px;
+
+  width: 1px;
+
+  background:
+    linear-gradient(
+      var(--accent),
+      var(--border),
+      var(--danger)
+    );
+
+  opacity: 0.45;
+}
+
+.reasoning-item {
+  position: relative;
+
+  padding-left: 36px !important;
+
+  transition:
+    transform 0.2s ease;
+}
+
+/* Decision nodes */
+.reasoning-item::before {
+  content: "";
+
+  position: absolute;
+
+  left: 7px;
+  top: 20px;
+
+  width: 9px;
+  height: 9px;
+
+  border:
+    2px solid #0d131c;
+
+  border-radius: 50%;
+
+  background: var(--accent);
+
+  box-shadow:
+    0 0 0 3px rgba(119, 224, 173, 0.08);
+
+  z-index: 1;
+}
+
+.reasoning-item:last-child::before {
+  background: var(--danger);
+
+  box-shadow:
+    0 0 0 3px rgba(239, 141, 152, 0.08);
+}
+
+.reasoning-item:hover {
+  transform: translateX(3px);
+}
+
+
+/* ---------------------------------------------------------
+   7. FINANCIAL SAFETY GATE
+   --------------------------------------------------------- */
+
+.safety-comparison.safety-blocked,
+.safe-action-banner {
+  position: relative;
+  overflow: hidden;
+}
+
+.safety-comparison.safety-blocked::before,
+.safe-action-banner::before {
+  content: "";
+
+  position: absolute;
+  inset: 0;
+
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      transparent 0 18px,
+      rgba(239, 141, 152, 0.025) 18px 19px
+    );
+
+  pointer-events: none;
+}
+
+.safety-result-fail {
+  box-shadow:
+    inset 0 0 0 1px rgba(239, 141, 152, 0.08),
+    0 0 35px rgba(239, 141, 152, 0.035);
+}
+
+.safe-action-banner {
+  animation:
+    safety-pulse 3.5s ease-in-out infinite;
+}
+
+
+/* ---------------------------------------------------------
+   8. EXECUTION TIMELINE
+   --------------------------------------------------------- */
+
+.execution-timeline .timeline-step {
+  transition:
+    transform 0.22s ease,
+    opacity 0.22s ease;
+}
+
+.execution-timeline .timeline-step:hover {
+  transform: translateX(5px);
+}
+
+.timeline-marker {
+  box-shadow:
+    0 0 0 4px rgba(119, 224, 173, 0.055);
+}
+
+
+/* ---------------------------------------------------------
+   9. BUTTON MICRO-INTERACTIONS
+   --------------------------------------------------------- */
+
+.upload-button,
+.icon-button,
+.nav-item,
+.text-button {
+  transition:
+    transform 0.18s ease,
+    background 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease;
+}
+
+.upload-button:hover {
+  transform: translateY(-1px);
+}
+
+.upload-button:active {
+  transform: translateY(0);
+}
+
+
+/* ---------------------------------------------------------
+   10. LOADING STATE
+   --------------------------------------------------------- */
+
+.loading-mark {
+  box-shadow:
+    0 0 0 1px rgba(119, 224, 173, 0.15),
+    0 0 35px rgba(119, 224, 173, 0.09);
+
+  animation:
+    loading-breathe 1.8s ease-in-out infinite;
+}
+
+
+/* ---------------------------------------------------------
+   11. MOTION ACCESSIBILITY
+   --------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+
+/* ---------------------------------------------------------
+   12. KEYFRAMES
+   --------------------------------------------------------- */
+
+@keyframes fs-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes chart-rise {
+  from {
+    opacity: 0;
+    transform:
+      translate(20px, 28px)
+      scale(0.92);
+  }
+
+  to {
+    opacity: 0.75;
+    transform:
+      translate(0, 0)
+      scale(1);
+  }
+}
+
+@keyframes scanline {
+  0%,
+  100% {
+    opacity: 0;
+    transform: translateX(8%);
+  }
+
+  35%,
+  65% {
+    opacity: 0.7;
+    transform: translateX(0);
+  }
+}
+
+@keyframes safety-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 rgba(239, 141, 152, 0);
+  }
+
+  50% {
+    box-shadow:
+      0 0 28px rgba(239, 141, 152, 0.045);
+  }
+}
+
+@keyframes loading-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.06);
+  }
+}
+
+
+/* ---------------------------------------------------------
+   13. RESPONSIVE
+   --------------------------------------------------------- */
+
+@media (max-width: 820px) {
+  .hero::before {
+    width: 70%;
+    opacity: 0.35;
+  }
+}
+
+/* =========================================================
+   FINSIGHT — CASH TRAJECTORY
+   ========================================================= */
+
+.trajectory-panel {
+  position: relative;
+  overflow: hidden;
+  margin-top: 18px;
+  padding: 22px;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 18px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(15, 23, 42, 0.94),
+      rgba(9, 15, 28, 0.96)
+    );
+}
+
+.trajectory-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.015) 50%,
+      transparent 100%
+    );
+}
+
+.trajectory-legend {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 16px;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  display: inline-block;
+  margin-right: 6px;
+}
+
+.legend-dot.baseline {
+  background: #64748b;
+}
+
+.legend-dot.recommended {
+  background: #f8fafc;
+  box-shadow: 0 0 10px rgba(248, 250, 252, 0.45);
+}
+
+.trajectory-chart {
+  position: relative;
+  width: 100%;
+  height: 250px;
+  overflow: hidden;
+  border-radius: 12px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(2, 6, 23, 0.25),
+      rgba(2, 6, 23, 0.55)
+    );
+}
+
+.chart-grid-line {
+  stroke: rgba(148, 163, 184, 0.09);
+  stroke-width: 1;
+}
+
+.chart-zero-line {
+  stroke: rgba(248, 113, 113, 0.45);
+  stroke-width: 1;
+  stroke-dasharray: 5 5;
+}
+
+.chart-zero-label {
+  fill: #f87171;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.trajectory-line {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.baseline-line {
+  stroke: #64748b;
+  stroke-width: 2;
+  stroke-dasharray: 6 5;
+  opacity: 0.8;
+}
+
+.recommended-line {
+  stroke: #f8fafc;
+  stroke-width: 3;
+  filter: drop-shadow(0 0 6px rgba(248, 250, 252, 0.18));
+}
+
+.trajectory-point {
+  vector-effect: non-scaling-stroke;
+}
+
+.start-point {
+  fill: #94a3b8;
+}
+
+.baseline-point {
+  fill: #64748b;
+}
+
+.recommended-point {
+  fill: #f8fafc;
+  filter: drop-shadow(0 0 6px rgba(248, 250, 252, 0.35));
+}
+
+.chart-axis-label {
+  fill: #64748b;
+  font-size: 10px;
+}
+
+.chart-value-label {
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.baseline-value {
+  fill: #94a3b8;
+}
+
+.recommended-value {
+  fill: #f8fafc;
+}
+
+.trajectory-footer {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 15px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.trajectory-positive {
+  font-size: 12px;
+  font-weight: 700;
+  color: #e2e8f0;
+}
+
+.trajectory-note {
+  font-size: 11px;
+  line-height: 1.5;
+  color: #64748b;
+  text-align: right;
+}
+
+
+/* =========================================================
+   FINSIGHT — DECISION REPLAY
+   ========================================================= */
+
+.decision-replay-panel {
+  position: relative;
+  margin-top: 20px;
+  padding: 22px;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 18px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(15, 23, 42, 0.94),
+      rgba(9, 15, 28, 0.97)
+    );
+  overflow: hidden;
+}
+
+.decision-replay-panel::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 29px;
+  width: 1px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(148, 163, 184, 0.02),
+      rgba(148, 163, 184, 0.18),
+      rgba(148, 163, 184, 0.02)
+    );
+  pointer-events: none;
+}
+
+.decision-replay {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.replay-step {
+  position: relative;
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  column-gap: 18px;
+  min-height: 68px;
+  padding: 5px 0 18px;
+}
+
+.replay-step:last-child {
+  padding-bottom: 0;
+}
+
+.replay-node {
+  position: relative;
+  z-index: 2;
+  width: 11px;
+  height: 11px;
+  margin-top: 6px;
+  border-radius: 50%;
+  background: #94a3b8;
+  border: 2px solid #0f172a;
+  box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.25);
+}
+
+.replay-step:not(:last-child) .replay-node::after {
+  content: "";
+  position: absolute;
+  top: 10px;
+  left: 3px;
+  width: 1px;
+  height: 70px;
+  background: rgba(148, 163, 184, 0.15);
+}
+
+.replay-step:hover .replay-node {
+  box-shadow:
+    0 0 0 1px rgba(248, 250, 252, 0.3),
+    0 0 12px rgba(248, 250, 252, 0.12);
+}
+
+.replay-blocked .replay-node {
+  background: #f87171;
+  box-shadow:
+    0 0 0 1px rgba(248, 113, 113, 0.25),
+    0 0 12px rgba(248, 113, 113, 0.16);
+}
+
+.replay-final .replay-node {
+  background: #f8fafc;
+  box-shadow:
+    0 0 0 1px rgba(248, 250, 252, 0.35),
+    0 0 14px rgba(248, 250, 252, 0.16);
+}
+
+.replay-final-blocked .replay-node {
+  background: #f87171;
+  box-shadow:
+    0 0 0 1px rgba(248, 113, 113, 0.3),
+    0 0 14px rgba(248, 113, 113, 0.2);
+}
+
+.replay-step h4 {
+  margin: 0 0 4px;
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 700;
+  color: #e2e8f0;
+  letter-spacing: 0.01em;
+}
+
+.replay-step p {
+  margin: 0;
+  max-width: 680px;
+  font-size: 12px;
+  line-height: 1.55;
+  color: #64748b;
+}
+
+.replay-final h4 {
+  color: #f8fafc;
+}
+
+.replay-final-blocked h4 {
+  color: #fca5a5;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 760px) {
+  .trajectory-panel,
+  .decision-replay-panel {
+    padding: 16px;
+    border-radius: 14px;
+  }
+
+  .trajectory-chart {
+    height: 210px;
+  }
+
+  .trajectory-footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .trajectory-note {
+    text-align: left;
+  }
+
+  .decision-replay-panel::before {
+    left: 23px;
+  }
+
+  .replay-step {
+    grid-template-columns: 13px minmax(0, 1fr);
+    column-gap: 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .replay-step:hover .replay-node {
+    box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.25);
+  }
+}
+
+/* =========================================================
+   FINSIGHT — FINAL READABILITY + DECISION REPLAY FIX
+   ========================================================= */
+
+/* ---------------------------------------------------------
+   READABILITY
+   --------------------------------------------------------- */
+
+/* Improve the secondary text hierarchy across the dashboard.
+   Keep labels compact, but make them readable at normal scale. */
+
+.panel-header > div > span,
+.panel-header span {
+  color: #8290a4 !important;
+  font-size: 10px !important;
+  line-height: 1.45 !important;
+}
+
+.section-intro p,
+.hero p,
+.priority-risk p,
+.risk-card p,
+.cause-card p,
+.scenario-card p,
+.reasoning-item p,
+.action-summary p,
+.execution-blocked-card p,
+.verification-copy p,
+.important-note p,
+.method-note,
+.trajectory-note {
+  color: #8190a5 !important;
+  font-size: 11px !important;
+  line-height: 1.55 !important;
+}
+
+.position-row > span,
+.position-value,
+.risk-details,
+.risk-details span,
+.factor-list span,
+.scenario-stats,
+.scenario-stats span,
+.range,
+.parameter span,
+.impact-indicator,
+.safety-column small,
+.safety-result p,
+.execution-blocked-reason,
+.verification-meta,
+.verification-meta span {
+  color: #7d8ca1 !important;
+  font-size: 10px !important;
+  line-height: 1.5 !important;
+}
+
+.position-value strong,
+.risk-details strong,
+.parameter strong,
+.verification-meta strong {
+  color: #d5deea !important;
+  font-size: 11px !important;
+}
+
+.mini-label,
+.eyebrow,
+.hero-kicker {
+  color: #78879c !important;
+  font-size: 9px !important;
+  font-weight: 750 !important;
+}
+
+.nav-label {
+  color: #718096 !important;
+  font-size: 9px !important;
+}
+
+.system-status {
+  color: #718096 !important;
+  font-size: 9px !important;
+}
+
+.data-confidence {
+  color: #7e8da1 !important;
+  font-size: 10px !important;
+}
+
+.simulation-badge,
+.dry-run-badge {
+  font-size: 10px !important;
+}
+
+.method-note svg {
+  color: #8291a5 !important;
+}
+
+.empty-state p,
+.empty-panel p,
+.no-risk span {
+  color: #7d8ca1 !important;
+  font-size: 10px !important;
+}
+
+
+/* ---------------------------------------------------------
+   DECISION REPLAY — STRUCTURE
+   --------------------------------------------------------- */
+
+.decision-replay-panel {
+  padding: 22px 24px !important;
+}
+
+.decision-replay {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-top: 4px;
+}
+
+/* Each replay row:
+   [number node] [content] */
+
+.replay-step {
+  position: relative;
+  display: grid !important;
+  grid-template-columns: 30px minmax(0, 1fr) !important;
+  column-gap: 16px !important;
+  min-height: 76px !important;
+  padding: 7px 0 19px !important;
+}
+
+/* Don't let the connecting line run through the final row. */
+
+.replay-step:last-child {
+  padding-bottom: 8px !important;
+}
+
+
+/* ---------------------------------------------------------
+   NUMBER NODES
+   --------------------------------------------------------- */
+
+.replay-node {
+  position: relative !important;
+  z-index: 3 !important;
+
+  width: 27px !important;
+  height: 27px !important;
+  margin-top: 1px !important;
+
+  display: grid !important;
+  place-items: center !important;
+
+  border: 1px solid #526174 !important;
+  border-radius: 50% !important;
+
+  background: #111a27 !important;
+  color: #c5d0de !important;
+
+  font-size: 9px !important;
+  font-weight: 750 !important;
+  letter-spacing: 0.02em !important;
+
+  box-shadow:
+    0 0 0 4px #0b111c,
+    0 0 0 1px rgba(148, 163, 184, 0.08) !important;
+}
+
+/* Connecting line */
+
+.replay-step:not(:last-child) .replay-node::after {
+  content: "" !important;
+
+  position: absolute !important;
+  top: 27px !important;
+  left: 12px !important;
+
+  width: 1px !important;
+  height: 67px !important;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(117, 132, 151, 0.35),
+      rgba(117, 132, 151, 0.08)
+    ) !important;
+}
+
+
+/* ---------------------------------------------------------
+   REPLAY CONTENT
+   --------------------------------------------------------- */
+
+.replay-step > div:last-child {
+  min-width: 0;
+  padding-top: 1px;
+}
+
+/* IMPORTANT:
+   JSX uses span + strong, not h4. */
+
+.replay-step > div:last-child > span {
+  display: block !important;
+
+  margin: 0 0 4px !important;
+
+  color: #8190a4 !important;
+  font-size: 9px !important;
+  line-height: 1.25 !important;
+  font-weight: 750 !important;
+
+  letter-spacing: 0.09em !important;
+  text-transform: uppercase !important;
+}
+
+.replay-step > div:last-child > strong {
+  display: block !important;
+
+  margin: 0 0 5px !important;
+
+  color: #dbe3ed !important;
+  font-size: 13px !important;
+  line-height: 1.35 !important;
+  font-weight: 650 !important;
+  letter-spacing: -0.01em !important;
+}
+
+.replay-step > div:last-child > p {
+  display: block !important;
+
+  max-width: 760px !important;
+  margin: 0 !important;
+
+  color: #78879c !important;
+  font-size: 10px !important;
+  line-height: 1.5 !important;
+}
+
+
+/* ---------------------------------------------------------
+   REPLAY STATES
+   --------------------------------------------------------- */
+
+.replay-step:hover .replay-node {
+  border-color: #8190a4 !important;
+  color: #edf2f8 !important;
+  background: #162131 !important;
+}
+
+.replay-blocked .replay-node {
+  border-color: rgba(248, 113, 113, 0.7) !important;
+  background: #24171c !important;
+  color: #fca5a5 !important;
+
+  box-shadow:
+    0 0 0 4px #0b111c,
+    0 0 12px rgba(248, 113, 113, 0.14) !important;
+}
+
+.replay-blocked > div:last-child > span {
+  color: #d9979d !important;
+}
+
+.replay-blocked > div:last-child > strong {
+  color: #f0b3b7 !important;
+}
+
+.replay-blocked > div:last-child > p {
+  color: #9a7d84 !important;
+}
+
+
+/* ---------------------------------------------------------
+   FINAL DECISION
+   --------------------------------------------------------- */
+
+.replay-final {
+  position: relative;
+
+  display: grid !important;
+  grid-template-columns: 30px minmax(0, 1fr) !important;
+  column-gap: 16px !important;
+
+  align-items: center;
+
+  margin-top: 2px !important;
+  padding: 15px 17px !important;
+
+  border: 1px solid rgba(148, 163, 184, 0.16) !important;
+  border-radius: 11px !important;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(148, 163, 184, 0.045),
+      rgba(148, 163, 184, 0.015)
+    ) !important;
+}
+
+.replay-final > svg {
+  width: 25px !important;
+  height: 25px !important;
+
+  padding: 4px;
+
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 50%;
+
+  color: #cbd5e1;
+}
+
+.replay-final > div {
+  min-width: 0;
+}
+
+.replay-final > div > span {
+  display: block !important;
+
+  margin-bottom: 4px !important;
+
+  color: #8190a4 !important;
+  font-size: 9px !important;
+  font-weight: 750 !important;
+  letter-spacing: 0.09em !important;
+}
+
+.replay-final > div > strong {
+  display: block !important;
+
+  color: #f1f5f9 !important;
+  font-size: 14px !important;
+  line-height: 1.3 !important;
+  font-weight: 700 !important;
+}
+
+.replay-final-blocked {
+  border-color: rgba(248, 113, 113, 0.22) !important;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(248, 113, 113, 0.065),
+      rgba(248, 113, 113, 0.018)
+    ) !important;
+}
+
+.replay-final-blocked > svg {
+  color: #fca5a5 !important;
+  border-color: rgba(248, 113, 113, 0.3) !important;
+}
+
+.replay-final-blocked > div > span {
+  color: #d9979d !important;
+}
+
+.replay-final-blocked > div > strong {
+  color: #f0b3b7 !important;
+}
+
+
+/* ---------------------------------------------------------
+   TRAJECTORY READABILITY
+   --------------------------------------------------------- */
+
+.trajectory-legend {
+  color: #8795a8 !important;
+  font-size: 10px !important;
+}
+
+.chart-zero-label {
+  fill: #f08087 !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+}
+
+.chart-axis-label {
+  fill: #738298 !important;
+  font-size: 10px !important;
+}
+
+.chart-value-label {
+  font-size: 12px !important;
+  font-weight: 750 !important;
+}
+
+.trajectory-positive {
+  color: #a8b5c6 !important;
+  font-size: 11px !important;
+}
+
+
+/* ---------------------------------------------------------
+   RESPONSIVE
+   --------------------------------------------------------- */
+
+@media (max-width: 760px) {
+  .replay-step {
+    grid-template-columns: 27px minmax(0, 1fr) !important;
+    column-gap: 13px !important;
+  }
+
+  .replay-step:not(:last-child) .replay-node::after {
+    left: 12px !important;
+  }
+
+  .replay-final {
+    grid-template-columns: 27px minmax(0, 1fr) !important;
+    column-gap: 13px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .replay-step:hover .replay-node {
+    border-color: #526174 !important;
+    color: #c5d0de !important;
+    background: #111a27 !important;
+  }
+}
+
+/* =========================================================
+   FINSIGHT — OVERVIEW FINAL POLISH
+   ========================================================= */
+
+/* ---------------------------------------------------------
+   OVERVIEW SECTION TYPOGRAPHY
+   --------------------------------------------------------- */
+
+.page .section-intro {
+  margin-bottom: 22px;
+}
+
+.page .section-intro .eyebrow {
+  color: #8b99ac !important;
+  font-size: 10px !important;
+  letter-spacing: 0.12em !important;
+  font-weight: 750 !important;
+}
+
+.page .section-intro h1 {
+  color: #edf2f7 !important;
+  letter-spacing: -0.025em;
+}
+
+.page .section-intro p {
+  max-width: 720px;
+  color: #8190a5 !important;
+  font-size: 11px !important;
+  line-height: 1.55 !important;
+}
+
+
+/* ---------------------------------------------------------
+   TOP METRIC CARDS
+   --------------------------------------------------------- */
+
+.metric-grid {
+  gap: 12px !important;
+}
+
+.metric-card {
+  min-height: 116px;
+  padding: 16px 17px !important;
+
+  border-color: rgba(148, 163, 184, 0.13) !important;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(17, 27, 42, 0.92),
+      rgba(10, 17, 29, 0.96)
+    ) !important;
+
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    background 160ms ease !important;
+}
+
+.metric-card:hover {
+  transform: translateY(-2px);
+
+  border-color: rgba(148, 163, 184, 0.24) !important;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(20, 31, 48, 0.96),
+      rgba(11, 19, 32, 0.98)
+    ) !important;
+}
+
+.metric-card-top {
+  margin-bottom: 13px !important;
+}
+
+.metric-card-top > span {
+  color: #7f8da1 !important;
+  font-size: 10px !important;
+  line-height: 1.3 !important;
+  font-weight: 650 !important;
+}
+
+.metric-icon {
+  color: #8b9aae !important;
+  opacity: 0.85;
+}
+
+.metric-card strong {
+  color: #e6edf5 !important;
+  font-size: 21px !important;
+  line-height: 1 !important;
+  letter-spacing: -0.035em !important;
+  font-variant-numeric: tabular-nums;
+}
+
+.metric-card small {
+  color: #7d8ca0 !important;
+  font-size: 9px !important;
+  line-height: 1.4 !important;
+}
+
+.metric-card .trend {
+  font-size: 9px !important;
+  font-weight: 700 !important;
+}
+
+
+/* ---------------------------------------------------------
+   CASH TRAJECTORY PANEL
+   --------------------------------------------------------- */
+
+.trajectory-panel {
+  margin-top: 14px !important;
+  padding: 20px 20px 16px !important;
+
+  border-color: rgba(148, 163, 184, 0.14) !important;
+}
+
+.trajectory-panel > * {
+  position: relative;
+  z-index: 1;
+}
+
+.trajectory-chart {
+  height: 255px !important;
+  margin-top: 2px;
+}
+
+
+/* Chart labels */
+
+.chart-zero-label {
+  fill: #f58a91 !important;
+  font-size: 11px !important;
+  font-weight: 750 !important;
+}
+
+.chart-axis-label {
+  fill: #8290a3 !important;
+  font-size: 10px !important;
+}
+
+.chart-value-label {
+  font-size: 12px !important;
+  font-weight: 750 !important;
+}
+
+.baseline-value {
+  fill: #a1adbc !important;
+}
+
+.recommended-value {
+  fill: #f1f5f9 !important;
+}
+
+
+/* Legend */
+
+.trajectory-legend {
+  gap: 20px !important;
+  margin-bottom: 12px !important;
+
+  color: #8795a8 !important;
+  font-size: 10px !important;
+  font-weight: 600 !important;
+}
+
+.trajectory-legend span {
+  display: inline-flex;
+  align-items: center;
+}
+
+.legend-dot {
+  flex: 0 0 auto;
+}
+
+
+/* ---------------------------------------------------------
+   TRAJECTORY FOOTER — FIX COLLISION
+   --------------------------------------------------------- */
+
+.trajectory-footer {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr 1fr !important;
+  align-items: start !important;
+  gap: 20px !important;
+
+  margin-top: 12px !important;
+  padding-top: 14px !important;
+}
+
+.trajectory-footer > div {
+  min-width: 0;
+}
+
+.trajectory-footer > div:nth-child(2) {
+  text-align: center;
+}
+
+.trajectory-footer > div:nth-child(3) {
+  text-align: right;
+}
+
+.trajectory-footer > div > span:first-child,
+.trajectory-footer > div > div:first-child {
+  display: block;
+
+  margin-bottom: 4px;
+
+  color: #77869a !important;
+  font-size: 9px !important;
+  line-height: 1.3 !important;
+  font-weight: 650 !important;
+  letter-spacing: 0.025em;
+}
+
+.trajectory-footer strong {
+  display: block;
+
+  color: #dce5ef !important;
+  font-size: 13px !important;
+  line-height: 1.2 !important;
+  font-weight: 700 !important;
+
+  font-variant-numeric: tabular-nums;
+}
+
+.trajectory-footer .trajectory-note {
+  display: block;
+
+  margin-top: 7px;
+
+  color: #68778c !important;
+  font-size: 9px !important;
+  line-height: 1.4 !important;
+}
+
+.trajectory-positive {
+  color: #b7c2d0 !important;
+}
+
+
+/* ---------------------------------------------------------
+   OPERATING POSITION
+   --------------------------------------------------------- */
+
+.grid-two {
+  gap: 12px !important;
+}
+
+.panel {
+  border-color: rgba(148, 163, 184, 0.13) !important;
+}
+
+.panel-header {
+  padding-bottom: 14px !important;
+  margin-bottom: 0 !important;
+}
+
+.panel-header h2 {
+  color: #dce4ed !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.01em;
+}
+
+.panel-header p {
+  color: #718096 !important;
+  font-size: 9px !important;
+  line-height: 1.4 !important;
+}
+
+.position-list {
+  margin-top: 0 !important;
+}
+
+.position-row {
+  min-height: 50px !important;
+  padding: 10px 0 !important;
+
+  border-bottom-color: rgba(148, 163, 184, 0.075) !important;
+}
+
+.position-row:last-child {
+  border-bottom: 0 !important;
+}
+
+.position-row > span:first-child {
+  color: #77869a !important;
+  font-size: 10px !important;
+  font-weight: 550 !important;
+}
+
+.position-value {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 9px;
+}
+
+.position-value strong {
+  color: #dce5ee !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  font-variant-numeric: tabular-nums;
+}
+
+.position-value .trend {
+  font-size: 9px !important;
+  white-space: nowrap;
+}
+
+
+/* ---------------------------------------------------------
+   PRIORITY RISK
+   --------------------------------------------------------- */
+
+.priority-risk {
+  border-color: rgba(148, 163, 184, 0.13) !important;
+}
+
+.priority-risk .risk-heading {
+  margin-top: 10px !important;
+}
+
+.priority-risk .risk-heading h3 {
+  color: #dce4ed !important;
+  font-size: 14px !important;
+  line-height: 1.35 !important;
+  font-weight: 700 !important;
+}
+
+.priority-risk .risk-category {
+  color: #78879b !important;
+  font-size: 9px !important;
+  letter-spacing: 0.07em !important;
+}
+
+.priority-risk > p {
+  max-width: 540px;
+
+  color: #7e8da1 !important;
+  font-size: 10px !important;
+  line-height: 1.55 !important;
+}
+
+.priority-risk .risk-footer {
+  color: #748398 !important;
+  font-size: 9px !important;
+}
+
+.priority-risk .risk-footer strong {
+  color: #bdc8d6 !important;
+  font-weight: 650 !important;
+}
+
+
+/* ---------------------------------------------------------
+   OVERVIEW MOBILE
+   --------------------------------------------------------- */
+
+@media (max-width: 800px) {
+  .trajectory-footer {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .trajectory-footer > div:nth-child(2),
+  .trajectory-footer > div:nth-child(3) {
+    text-align: left !important;
+  }
+
+  .metric-card strong {
+    font-size: 19px !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .metric-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  .trajectory-panel {
+    padding: 16px !important;
+  }
+
+  .trajectory-chart {
+    height: 210px !important;
+  }
+}
+
+
+/* =========================================================
+   FINSIGHT — FINAL OVERVIEW LAYER
+   Load AFTER App.css and visual-upgrade.css
+   ========================================================= */
+
+.overview-page {
+  padding-bottom: 36px;
+}
+
+/* ---------------- HERO ---------------- */
+.overview-hero {
+  min-height: 260px !important;
+  padding: 30px 32px !important;
+}
+
+.overview-hero-copy {
+  max-width: 720px;
+}
+
+.overview-hero .hero-kicker {
+  color: #8b99ac !important;
+  font-size: 9px !important;
+}
+
+.overview-hero h2 {
+  margin-top: 18px !important;
+  margin-bottom: 12px !important;
+  font-size: clamp(31px, 3.25vw, 44px) !important;
+  line-height: 1.01 !important;
+}
+
+.overview-hero p {
+  max-width: 590px;
+  color: #8290a4 !important;
+  font-size: 11px !important;
+  line-height: 1.6 !important;
+}
+
+.hero-facts {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  margin-top: 22px;
+}
+
+.hero-facts > div {
+  min-width: 120px;
+  padding-right: 20px;
+  margin-right: 20px;
+  border-right: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.hero-facts > div:last-child {
+  border-right: 0;
+  margin-right: 0;
+  padding-right: 0;
+}
+
+.hero-facts span {
+  display: block;
+  margin-bottom: 5px;
+  color: #738196 !important;
+  font-size: 9px !important;
+  font-weight: 650;
+}
+
+.hero-facts strong {
+  display: block;
+  color: #dce5ef !important;
+  font-size: 13px !important;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.hero-facts .fact-negative {
+  color: #e09a9f !important;
+}
+
+.hero-facts .fact-positive {
+  color: #9fc8ad !important;
+}
+
+.hero-decision {
+  width: 204px !important;
+  min-height: 138px !important;
+  padding: 18px !important;
+}
+
+.hero-decision .mini-label {
+  color: #75849a !important;
+  font-size: 9px !important;
+}
+
+.hero-decision .decision-status {
+  margin-top: 10px;
+  font-size: 17px !important;
+  letter-spacing: 0.035em !important;
+}
+
+.hero-decision-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 11px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(148, 163, 184, 0.10);
+}
+
+.hero-decision-meta span {
+  color: #68778c !important;
+  font-size: 9px !important;
+}
+
+.hero-decision-meta strong {
+  color: #b8c4d2 !important;
+  font-size: 9px !important;
+}
+
+.hero-decision button {
+  margin-top: 12px !important;
+}
+
+.hero-decision-blocked {
+  border-color: rgba(239, 141, 141, 0.24) !important;
+  background: rgba(18, 13, 18, 0.76) !important;
+}
+
+/* ---------------- TOP METRICS ---------------- */
+.overview-metrics {
+  margin-bottom: 12px;
+}
+
+.overview-metrics .metric-card {
+  min-height: 112px !important;
+}
+
+.overview-metrics .metric-card > strong {
+  font-size: 22px !important;
+}
+
+/* ---------------- FINANCIAL PULSE ---------------- */
+.financial-pulse {
+  margin-top: 12px;
+  padding: 20px 21px 18px !important;
+  overflow: hidden;
+}
+
+.financial-pulse-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.10);
+}
+
+.pulse-eyebrow {
+  margin-bottom: 5px;
+  color: #77869a;
+  font-size: 9px;
+  font-weight: 750;
+  letter-spacing: 0.11em;
+}
+
+.financial-pulse-header h3 {
+  margin: 0;
+  color: #dce5ee;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.pulse-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex: 0 0 auto;
+  padding: 7px 9px;
+  border: 1px solid rgba(148, 163, 184, 0.13);
+  border-radius: 999px;
+  color: #8795a8;
+  background: rgba(148, 163, 184, 0.035);
+  font-size: 8px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+}
+
+.pulse-state span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #8795a8;
+}
+
+.pulse-state.negative {
+  color: #d8949a;
+  border-color: rgba(239, 141, 141, 0.18);
+  background: rgba(239, 141, 141, 0.045);
+}
+
+.pulse-state.negative span {
+  background: #df8f96;
+}
+
+.pulse-state.positive {
+  color: #91bda1;
+  border-color: rgba(113, 216, 162, 0.16);
+  background: rgba(113, 216, 162, 0.04);
+}
+
+.pulse-state.positive span {
+  background: #79b994;
+}
+
+.financial-pulse-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 170px;
+  gap: 22px;
+  padding: 19px 0 17px;
+}
+
+.cash-flow-block,
+.cash-flow-gap {
+  min-width: 0;
+}
+
+.pulse-label {
+  display: block;
+  margin-bottom: 7px;
+  color: #728197;
+  font-size: 8px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+}
+
+.cash-flow-block > strong {
+  display: block;
+  color: #dce5ee;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  font-variant-numeric: tabular-nums;
+}
+
+.pulse-bar {
+  height: 4px;
+  margin-top: 13px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: #18212d;
+}
+
+.pulse-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+}
+
+.revenue-bar span {
+  background: #71859e;
+}
+
+.expense-bar span {
+  background: #a27c83;
+}
+
+.cash-flow-gap {
+  padding-left: 19px;
+  border-left: 1px solid rgba(148, 163, 184, 0.10);
+}
+
+.cash-flow-gap > strong {
+  display: block;
+  font-size: 19px;
+  font-weight: 750;
+  letter-spacing: -0.025em;
+  font-variant-numeric: tabular-nums;
+}
+
+.cash-flow-gap > span:last-child {
+  display: block;
+  margin-top: 5px;
+  color: #6f7e92;
+  font-size: 9px;
+}
+
+.financial-pulse .positive {
+  color: #86b79a !important;
+}
+
+.financial-pulse .negative {
+  color: #d78f96 !important;
+}
+
+.pulse-diagnostics {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  border-top: 1px solid rgba(148, 163, 184, 0.08);
+}
+
+.pulse-diagnostics > div {
+  min-width: 0;
+  padding: 13px 14px 2px 0;
+  margin-right: 14px;
+  border-right: 1px solid rgba(148, 163, 184, 0.08);
+}
+
+.pulse-diagnostics > div:last-child {
+  border-right: 0;
+  margin-right: 0;
+}
+
+.pulse-diagnostics span {
+  display: block;
+  margin-bottom: 5px;
+  color: #6f7e92;
+  font-size: 8px;
+  line-height: 1.35;
+}
+
+.pulse-diagnostics strong {
+  display: block;
+  color: #b8c4d2;
+  font-size: 10px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------------- TRAJECTORY ---------------- */
+.trajectory-panel {
+  margin-top: 12px !important;
+  padding: 20px 21px 17px !important;
+}
+
+.trajectory-panel .panel-header {
+  margin-bottom: 5px !important;
+}
+
+.trajectory-panel .panel-header h3 {
+  color: #dce5ee !important;
+  font-size: 14px !important;
+}
+
+.trajectory-panel .panel-header > div:first-child > span {
+  color: #748398 !important;
+  font-size: 9px !important;
+}
+
+.trajectory-chart {
+  height: 250px !important;
+}
+
+.trajectory-footer {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 0 !important;
+  margin-top: 10px !important;
+  padding-top: 13px !important;
+}
+
+.trajectory-footer > div {
+  min-width: 0;
+  padding-right: 18px;
+  margin-right: 18px;
+  border-right: 1px solid rgba(148, 163, 184, 0.08);
+}
+
+.trajectory-footer > div:last-child {
+  border-right: 0;
+  margin-right: 0;
+  padding-right: 0;
+}
+
+.trajectory-footer > div > span {
+  display: block !important;
+  margin-bottom: 5px;
+  color: #6f7e92 !important;
+  font-size: 8px !important;
+  font-weight: 650 !important;
+}
+
+.trajectory-footer > div > strong {
+  display: block !important;
+  color: #d5deea !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  font-variant-numeric: tabular-nums;
+}
+
+.trajectory-footer > div:nth-child(2) {
+  text-align: center;
+}
+
+.trajectory-footer > div:nth-child(3) {
+  text-align: right;
+}
+
+.trajectory-note {
+  margin: 9px 0 0 !important;
+  color: #68778c !important;
+  font-size: 8px !important;
+  line-height: 1.45 !important;
+  text-align: right;
+}
+
+/* ---------------- DETAIL PANELS ---------------- */
+.overview-detail-grid {
+  margin-top: 12px;
+}
+
+.overview-operating-panel,
+.overview-risk-panel {
+  min-height: 0;
+}
+
+.overview-operating-panel .panel-header,
+.overview-risk-panel .panel-header {
+  padding: 17px 20px 14px !important;
+}
+
+.operating-signal {
+  margin: 0 20px 18px;
+  padding: 12px 13px;
+  border: 1px solid rgba(148, 163, 184, 0.09);
+  border-radius: 8px;
+  background: rgba(148, 163, 184, 0.025);
+}
+
+.operating-signal-label {
+  margin-bottom: 7px;
+  color: #68778c;
+  font-size: 8px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+}
+
+.operating-signal > div:last-of-type {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  color: #8a98ab;
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.operating-signal > div:last-of-type strong {
+  font-size: 13px;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+
+.operating-signal .signal-negative strong {
+  color: #d99097;
+}
+
+.operating-signal .signal-positive strong {
+  color: #91bd9f;
+}
+
+.operating-signal p {
+  margin: 6px 0 0;
+  color: #68778c;
+  font-size: 8px;
+  line-height: 1.45;
+}
+
+.risk-evidence-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+  margin-top: 17px;
+  padding-top: 13px;
+  border-top: 1px solid rgba(148, 163, 184, 0.08);
+}
+
+.risk-evidence-grid > div {
+  min-width: 0;
+  padding: 0 14px 10px 0;
+}
+
+.risk-evidence-grid span {
+  display: block;
+  margin-bottom: 4px;
+  color: #68778c !important;
+  font-size: 8px !important;
+}
+
+.risk-evidence-grid strong {
+  display: block;
+  overflow: hidden;
+  color: #c4cfdb !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* ---------------- DECISION STRIP ---------------- */
+.overview-decision-strip {
+  margin-top: 12px !important;
+}
+
+.overview-decision-strip .decision-strip-content p {
+  max-width: 650px;
+}
+
+.decision-strip-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(72px, auto)) auto;
+  align-items: center;
+  gap: 14px;
+  flex: 0 0 auto;
+}
+
+.decision-strip-metrics > div {
+  min-width: 70px;
+}
+
+.decision-strip-metrics span {
+  display: block;
+  margin-bottom: 5px;
+  color: #6f7e92 !important;
+  font-size: 8px !important;
+  white-space: nowrap;
+}
+
+.decision-strip-metrics strong {
+  color: #c4cfdb !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  font-variant-numeric: tabular-nums;
+}
+
+.decision-strip-metrics strong.positive {
+  color: #8fbd9e !important;
+}
+
+.decision-strip-metrics strong.negative {
+  color: #d99097 !important;
+}
+
+/* ---------------- RESPONSIVE ---------------- */
+@media (max-width: 980px) {
+  .financial-pulse-main {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .cash-flow-gap {
+    grid-column: 1 / -1;
+    padding: 13px 0 0;
+    border-left: 0;
+    border-top: 1px solid rgba(148, 163, 184, 0.08);
+  }
+
+  .pulse-diagnostics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .decision-strip-metrics {
+    grid-template-columns: repeat(3, minmax(70px, 1fr));
+  }
+}
+
+@media (max-width: 800px) {
+  .overview-hero {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  .hero-decision {
+    width: auto !important;
+  }
+
+  .hero-facts {
+    flex-wrap: wrap;
+    row-gap: 12px;
+  }
+
+  .pulse-diagnostics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .trajectory-footer {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .trajectory-footer > div,
+  .trajectory-footer > div:nth-child(2),
+  .trajectory-footer > div:nth-child(3) {
+    margin: 0;
+    padding: 0;
+    border-right: 0;
+    text-align: left;
+  }
+
+  .trajectory-note {
+    text-align: left;
+  }
+
+  .decision-strip-metrics {
+    grid-template-columns: repeat(2, minmax(80px, 1fr));
+    margin-top: 8px;
+  }
+}
+
+@media (max-width: 600px) {
+  .financial-pulse-main {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .cash-flow-gap {
+    grid-column: auto;
+  }
+
+  .pulse-diagnostics {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .hero-facts > div {
+    min-width: 100px;
+  }
+}
+
+
+/* =========================================================
+   FINSIGHT — FINAL OVERVIEW MICRO-POLISH
+   Readability + trajectory impact emphasis
+   ========================================================= */
+
+/* Secondary text: slightly brighter without destroying hierarchy */
+.section-intro p,
+.panel-header p,
+.panel-header > div > span,
+.position-row > span:first-child,
+.priority-risk > p,
+.priority-risk .risk-footer,
+.trajectory-legend,
+.trajectory-note,
+.trajectory-footer > div > span:first-child,
+.trajectory-footer > div > div:first-child,
+.metric-card-top > span,
+.metric-card small {
+  color: #8b98aa !important;
+}
+
+/* Small labels remain compact, but are easier to read */
+.metric-card-top > span,
+.panel-header > div > span,
+.position-row > span:first-child,
+.priority-risk .risk-footer,
+.trajectory-footer > div > span:first-child,
+.trajectory-footer > div > div:first-child {
+  font-size: 10px !important;
+}
+
+/* Financial values stay visually dominant */
+.metric-card strong,
+.position-value strong,
+.trajectory-footer strong {
+  color: #e6edf5 !important;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Make the trajectory's important numbers more prominent */
+.trajectory-footer > div:nth-child(2) strong {
+  font-size: 14px !important;
+}
+
+.trajectory-footer > div:nth-child(3) strong {
+  font-size: 15px !important;
+  color: #f1f5f9 !important;
+}
+
+/* Give the recommended endpoint a subtle visual emphasis */
+.recommended-point {
+  filter:
+    drop-shadow(0 0 5px rgba(248, 250, 252, 0.28))
+    drop-shadow(0 0 12px rgba(248, 250, 252, 0.10));
+}
+
+.recommended-line {
+  filter:
+    drop-shadow(0 0 5px rgba(248, 250, 252, 0.16));
+}
+
+/* Make the chart's zero-risk boundary easier to notice */
+.chart-zero-label {
+  fill: #f58a91 !important;
+  font-size: 11px !important;
+  font-weight: 750 !important;
+}
+
+/* Recommended-path impact: the "so what?" line */
+.trajectory-positive {
+  color: #d3dce7 !important;
+  font-size: 11px !important;
+  font-weight: 650 !important;
+}
+
+/* Keep methodology disclaimer readable but subordinate */
+.trajectory-note {
+  color: #718096 !important;
+  font-size: 9px !important;
+  line-height: 1.45 !important;
+}
+
+/* Slightly improve the risk evidence without making it loud */
+.priority-risk .risk-heading h3 {
+  color: #e0e7ef !important;
+}
+
+.priority-risk .risk-category {
+  color: #8290a3 !important;
+}
+
+/* Mobile: preserve readable hierarchy */
+@media (max-width: 800px) {
+  .trajectory-footer > div:nth-child(2) strong,
+  .trajectory-footer > div:nth-child(3) strong {
+    font-size: 13px !important;
+  }
+}

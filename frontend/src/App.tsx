@@ -472,6 +472,7 @@ function App() {
               <Overview
                 state={financialState}
                 risks={risks}
+                scenarios={scenarioRows}
                 decision={decision}
                 policy={policy}
                 recommendedScenario={recommendedScenario}
@@ -541,9 +542,234 @@ function pageTitle(view: View): string {
   }
 }
 
+
+function CashTrajectory({
+  scenarios,
+  baselineCash,
+  recommendedScenario,
+}: {
+  scenarios: AnyObject[];
+  baselineCash: number;
+  recommendedScenario: AnyObject;
+}) {
+  const baseline = scenarios.find(
+    (scenario) =>
+      scenario.scenario_id === "baseline" || scenario.baseline,
+  );
+
+  const selected = scenarios.find(
+    (scenario) =>
+      scenario.scenario_id === recommendedScenario?.scenario_id,
+  );
+
+  const baselineEnd = number(
+    baseline?.endingCash,
+    baselineCash,
+  );
+
+  const selectedEnd = number(
+    selected?.endingCash,
+    baselineEnd,
+  );
+
+  const values = [baselineCash, baselineEnd, selectedEnd];
+  const maxAbs = Math.max(...values.map((value) => Math.abs(value)), 1);
+
+  const width = 760;
+  const height = 250;
+  const left = 52;
+  const right = 24;
+  const top = 24;
+  const bottom = 42;
+  const chartWidth = width - left - right;
+  const chartHeight = height - top - bottom;
+  const x0 = left;
+  const x1 = left + chartWidth;
+
+  const y = (value: number) =>
+    top + ((maxAbs - value) / (maxAbs * 2)) * chartHeight;
+
+  const startY = y(baselineCash);
+  const baselineEndY = y(baselineEnd);
+  const selectedEndY = y(selectedEnd);
+  const zeroY = y(0);
+
+  const baselinePath = `
+    M ${x0} ${startY}
+    C ${x0 + chartWidth * 0.25} ${startY},
+      ${x0 + chartWidth * 0.48} ${baselineEndY},
+      ${x1} ${baselineEndY}
+  `;
+
+  const selectedPath = `
+    M ${x0} ${startY}
+    C ${x0 + chartWidth * 0.25} ${startY},
+      ${x0 + chartWidth * 0.55} ${selectedEndY},
+      ${x1} ${selectedEndY}
+  `;
+
+  return (
+    <section className="trajectory-panel panel">
+      <div className="panel-header">
+        <div>
+          <h3>Financial Trajectory</h3>
+          <span>Current position vs. simulated endpoints</span>
+        </div>
+
+        <div className="trajectory-legend">
+          <span>
+            <i className="legend-dot baseline" />
+            Baseline
+          </span>
+          {selected && (
+            <span>
+              <i className="legend-dot recommended" />
+              Recommended
+            </span>
+          )}
+        </div>
+      </div>
+
+      <div className="trajectory-chart">
+        <svg
+          viewBox={`0 0 ${width} ${height}`}
+          role="img"
+          aria-label="Financial trajectory comparison"
+        >
+          <line
+            x1={left}
+            x2={x1}
+            y1={top + chartHeight * 0.25}
+            y2={top + chartHeight * 0.25}
+            className="chart-grid-line"
+          />
+          <line
+            x1={left}
+            x2={x1}
+            y1={top + chartHeight * 0.5}
+            y2={top + chartHeight * 0.5}
+            className="chart-grid-line"
+          />
+          <line
+            x1={left}
+            x2={x1}
+            y1={top + chartHeight * 0.75}
+            y2={top + chartHeight * 0.75}
+            className="chart-grid-line"
+          />
+
+          <line
+            x1={left}
+            x2={x1}
+            y1={zeroY}
+            y2={zeroY}
+            className="chart-zero-line"
+          />
+
+          <text x={left} y={zeroY - 8} className="chart-zero-label">
+            ₹0 — cash shortfall
+          </text>
+
+          <path d={baselinePath} className="trajectory-line baseline-line" />
+
+          {selected && (
+            <path
+              d={selectedPath}
+              className="trajectory-line recommended-line"
+            />
+          )}
+
+          <circle
+            cx={x0}
+            cy={startY}
+            r="5"
+            className="trajectory-point start-point"
+          />
+
+          <circle
+            cx={x1}
+            cy={baselineEndY}
+            r="5"
+            className="trajectory-point baseline-point"
+          />
+
+          {selected && (
+            <circle
+              cx={x1}
+              cy={selectedEndY}
+              r="6"
+              className="trajectory-point recommended-point"
+            />
+          )}
+
+          <text x={x0} y={height - 12} className="chart-axis-label">
+            NOW
+          </text>
+
+          <text
+            x={x1}
+            y={height - 12}
+            textAnchor="end"
+            className="chart-axis-label"
+          >
+            SIMULATED HORIZON
+          </text>
+
+          <text
+            x={x1 - 8}
+            y={baselineEndY - 12}
+            textAnchor="end"
+            className="chart-value-label baseline-value"
+          >
+            {compactMoney(baselineEnd)}
+          </text>
+
+          {selected && (
+            <text
+              x={x1 - 8}
+              y={selectedEndY + 22}
+              textAnchor="end"
+              className="chart-value-label recommended-value"
+            >
+              {compactMoney(selectedEnd)}
+            </text>
+          )}
+        </svg>
+      </div>
+
+      <div className="trajectory-footer">
+        <div>
+          <span>Starting cash</span>
+          <strong>{compactMoney(baselineCash)}</strong>
+        </div>
+
+        <div>
+          <span>Baseline endpoint</span>
+          <strong>{compactMoney(baselineEnd)}</strong>
+        </div>
+
+        {selected && (
+          <div>
+            <span>Recommended endpoint</span>
+            <strong className="trajectory-positive">
+              {compactMoney(selectedEnd)}
+            </strong>
+          </div>
+        )}
+      </div>
+
+      <p className="trajectory-note">
+        The curve connects observed simulation endpoints; it does not
+        invent month-by-month simulation values.
+      </p>
+    </section>
+  );
+}
+
 function Overview({
   state,
   risks,
+  scenarios,
   decision,
   policy,
   recommendedScenario,
@@ -553,6 +779,7 @@ function Overview({
 }: {
   state: AnyObject;
   risks: AnyObject[];
+  scenarios: AnyObject[];
   decision: AnyObject;
   policy: AnyObject;
   recommendedScenario: AnyObject;
@@ -566,29 +793,104 @@ function Overview({
   const expenses = state.monthly_expenses;
   const revenueGrowth = state.revenue_growth;
   const expenseGrowth = state.expense_growth;
+  const ratio = number(state.revenue_expense_ratio);
+  const averageBurn = state.average_net_burn;
+  const burnMultiple = state.burn_multiple;
+
+  const selectedScenario = scenarios.find(
+    (scenario: AnyObject) =>
+      scenario.scenario_id === recommendedScenario?.scenario_id,
+  );
+
+  const baselineScenario = scenarios.find(
+    (scenario: AnyObject) =>
+      scenario.scenario_id === "baseline" || scenario.baseline,
+  );
+
+  const baselineEndingCash = number(
+    baselineScenario?.endingCash,
+    number(state.cash),
+  );
+
+  const selectedEndingCash = number(
+    selectedScenario?.endingCash,
+    baselineEndingCash,
+  );
+
+  const endingCashImprovement =
+    selectedEndingCash - baselineEndingCash;
+
+
+  const selectedShortfall = number(
+    selectedScenario?.shortfall,
+    number(recommendedScenario?.probability_of_cash_shortfall),
+  );
+
+  const baselineShortfall = number(
+    baselineScenario?.shortfall,
+  );
+
+  const shortfallReduced = selectedShortfall < baselineShortfall;
+  const monthlyGap = number(revenue) - number(expenses);
+
+  const riskHeadline = isBlocked
+    ? "Cash protection is not yet safe to automate."
+    : highestRisk
+      ? "Financial pressure has been evaluated before action."
+      : "Financial position has been evaluated for action.";
 
   return (
-    <div className="page">
-      <section className="hero">
-        <div>
+    <div className="page overview-page">
+      <section className={`hero overview-hero ${isBlocked ? "hero-blocked" : ""}`}>
+        <div className="overview-hero-copy">
           <div className="hero-kicker">
             <span className="live-dot" />
             AI FINANCIAL BRIEF
           </div>
 
           <h2>
-            Your next financial move,
-            <br />
-            <span>already evaluated.</span>
+            {isBlocked ? (
+              <>
+                Cash protection comes
+                <br />
+                <span>before automation.</span>
+              </>
+            ) : (
+              <>
+                Your next financial move,
+                <br />
+                <span>already evaluated.</span>
+              </>
+            )}
           </h2>
 
           <p>
-            FinSight converts raw financial history into a
-            risk-aware, policy-gated action.
+            {riskHeadline} FinSight converts financial history into a
+            risk-aware, policy-gated decision.
           </p>
+
+          <div className="hero-facts">
+            <div>
+              <span>Cash</span>
+              <strong>{compactMoney(state.cash)}</strong>
+            </div>
+
+            <div>
+              <span>Monthly position</span>
+              <strong className={monthlyGap < 0 ? "fact-negative" : "fact-positive"}>
+                {monthlyGap >= 0 ? "+" : "−"}
+                {compactMoney(Math.abs(monthlyGap))}
+              </strong>
+            </div>
+
+            <div>
+              <span>Runway</span>
+              <strong>{months(runway)}</strong>
+            </div>
+          </div>
         </div>
 
-        <div className="hero-decision">
+        <div className={`hero-decision ${isBlocked ? "hero-decision-blocked" : ""}`}>
           <div className="mini-label">CURRENT DECISION</div>
 
           <div
@@ -605,6 +907,15 @@ function Overview({
                 "ANALYZED"}
           </div>
 
+          <div className="hero-decision-meta">
+            <span>Data confidence</span>
+            <strong>
+              {confidenceLabel(
+                state.data_confidence ?? decision.confidence,
+              )}
+            </strong>
+          </div>
+
           <button onClick={() => onNavigate("decision")}>
             View decision
             <ChevronRight size={16} />
@@ -612,7 +923,7 @@ function Overview({
         </div>
       </section>
 
-      <section className="metric-grid">
+      <section className="metric-grid overview-metrics">
         <MetricCard
           label="Cash on hand"
           value={compactMoney(state.cash)}
@@ -630,23 +941,36 @@ function Overview({
           label="Runway"
           value={months(runway)}
           icon={<Clock3 size={18} />}
-          warning={number(runway) <= 6}
+          warning={number(runway) > 0 && number(runway) <= 6}
         />
 
         <MetricCard
           label="Revenue / expense"
-          value={number(
-            state.revenue_expense_ratio,
-          ).toFixed(2)}
+          value={ratio.toFixed(2)}
           icon={<Activity size={18} />}
-          warning={
-            number(state.revenue_expense_ratio) < 1
-          }
+          warning={ratio < 1}
         />
       </section>
 
-      <section className="grid-two">
-        <div className="panel">
+      <FinancialPulse
+        revenue={revenue}
+        expenses={expenses}
+        monthlyGap={monthlyGap}
+        revenueGrowth={revenueGrowth}
+        expenseGrowth={expenseGrowth}
+        averageBurn={averageBurn}
+        burnMultiple={burnMultiple}
+        ratio={ratio}
+      />
+
+      <CashTrajectory
+        scenarios={scenarios}
+        baselineCash={number(state.cash)}
+        recommendedScenario={recommendedScenario}
+      />
+
+      <section className="grid-two overview-detail-grid">
+        <div className="panel overview-operating-panel">
           <PanelHeader
             title="Operating position"
             subtitle="Latest financial state"
@@ -670,26 +994,38 @@ function Overview({
 
             <PositionRow
               label="Average net burn"
-              value={money(state.average_net_burn)}
+              value={money(averageBurn)}
             />
 
             <PositionRow
               label="Burn multiple"
               value={
-                state.burn_multiple === null
+                burnMultiple === null || burnMultiple === undefined
                   ? "N/A"
-                  : number(state.burn_multiple).toFixed(2)
+                  : number(burnMultiple).toFixed(2)
               }
             />
           </div>
+
+          <div className="operating-signal">
+            <div className="operating-signal-label">MONTHLY CASH FLOW SIGNAL</div>
+            <div className={monthlyGap < 0 ? "signal-negative" : "signal-positive"}>
+              {monthlyGap < 0 ? "Deficit" : "Surplus"}
+              <strong>
+                {monthlyGap >= 0 ? "+" : "−"}
+                {compactMoney(Math.abs(monthlyGap))}
+              </strong>
+            </div>
+            <p>
+              Revenue currently covers {ratio.toFixed(2)}× of monthly expenses.
+            </p>
+          </div>
         </div>
 
-        <div className="panel risk-panel">
+        <div className="panel risk-panel overview-risk-panel">
           <PanelHeader
             title="Priority risk"
-            subtitle={`${risks.length} detected risk${
-              risks.length === 1 ? "" : "s"
-            }`}
+            subtitle={`${risks.length} detected risk${risks.length === 1 ? "" : "s"}`}
             action={
               <button
                 className="text-button"
@@ -703,11 +1039,7 @@ function Overview({
           {highestRisk ? (
             <div className="priority-risk">
               <div className="risk-heading">
-                <span
-                  className={severityClass(
-                    highestRisk.severity,
-                  )}
-                >
+                <span className={severityClass(highestRisk.severity)}>
                   {highestRisk.severity}
                 </span>
 
@@ -720,115 +1052,209 @@ function Overview({
 
               <p>{highestRisk.evidence}</p>
 
-              <div className="risk-footer">
-                <span>
-                  Confidence{" "}
+              <div className="risk-evidence-grid">
+                <div>
+                  <span>Metric</span>
+                  <strong>{titleCase(highestRisk.metric)}</strong>
+                </div>
+
+                {highestRisk.current_value != null && (
+                  <div>
+                    <span>Current</span>
+                    <strong>
+                      {highestRisk.metric?.includes("growth") ||
+                      highestRisk.metric?.includes("volatility")
+                        ? percent(highestRisk.current_value)
+                        : number(highestRisk.current_value).toFixed(2)}
+                    </strong>
+                  </div>
+                )}
+
+                <div>
+                  <span>Confidence</span>
                   <strong>
-                    {confidenceLabel(
-                      highestRisk.confidence,
-                    )}
+                    {confidenceLabel(highestRisk.confidence)}
                   </strong>
-                </span>
+                </div>
 
                 {highestRisk.financial_impact != null && (
-                  <span>
-                    Impact{" "}
+                  <div>
+                    <span>Impact</span>
                     <strong>
-                      {compactMoney(
-                        highestRisk.financial_impact,
-                      )}
+                      {compactMoney(highestRisk.financial_impact)}
                     </strong>
-                  </span>
+                  </div>
                 )}
               </div>
             </div>
           ) : (
             <div className="no-risk">
               <ShieldCheck size={30} />
-
-              <strong>
-                No material risks detected
-              </strong>
-
-              <span>
-                The current financial state is within
-                thresholds.
-              </span>
+              <strong>No material risks detected</strong>
+              <span>The current financial state is within thresholds.</span>
             </div>
           )}
         </div>
       </section>
 
-      <section
-        className={`decision-strip ${
-          isBlocked ? "blocked" : ""
-        }`}
-      >
+      <section className={`decision-strip overview-decision-strip ${isBlocked ? "blocked" : ""}`}>
         <div className="decision-strip-icon">
-          {isBlocked ? (
-            <ShieldCheck size={22} />
-          ) : (
-            <Target size={22} />
-          )}
+          {isBlocked ? <ShieldCheck size={22} /> : <Target size={22} />}
         </div>
 
         <div className="decision-strip-content">
           <div className="mini-label">
-            {isBlocked
-              ? "NO SAFE ACTION FOUND"
-              : "RECOMMENDED PATH"}
+            {isBlocked ? "NO SAFE ACTION FOUND" : "RECOMMENDED PATH"}
           </div>
 
           <h3>
             {isBlocked
               ? "Automatic execution blocked"
-              : displayName(
-                  recommendedScenario,
-                  "No intervention",
-                )}
+              : displayName(recommendedScenario, "No intervention")}
           </h3>
 
           <p>
             {isBlocked
               ? policy?.policy?.violations?.[0] ??
-                policy?.reasoning?.find(
-                  (item: string) =>
-                    item
-                      .toLowerCase()
-                      .includes("blocked"),
-                ) ??
                 "The selected intervention does not satisfy the financial safety policy."
               : recommendedScenario.description ??
                 "FinSight evaluated the available intervention scenarios."}
           </p>
         </div>
 
-        <div className="decision-strip-meta">
+        <div className="decision-strip-metrics">
+          <div>
+            <span>Ending cash delta</span>
+            <strong className={endingCashImprovement >= 0 ? "positive" : "negative"}>
+              {endingCashImprovement >= 0 ? "+" : "−"}
+              {compactMoney(Math.abs(endingCashImprovement))}
+            </strong>
+          </div>
+
+          <div>
+            <span>Shortfall risk</span>
+            <strong className={shortfallReduced ? "positive" : "negative"}>
+              {percent(selectedShortfall)}
+            </strong>
+          </div>
+
           <div>
             <span>Policy</span>
             <strong>{policy.status ?? "—"}</strong>
           </div>
 
-          <div>
-            <span>Confidence</span>
-
-            <strong>
-              {confidenceLabel(
-                state.data_confidence ??
-                  decision.confidence,
-              )}
-            </strong>
-          </div>
-
-          <button
-            onClick={() => onNavigate("decision")}
-          >
+          <button onClick={() => onNavigate("decision")}>
             Inspect
             <ChevronRight size={17} />
           </button>
         </div>
       </section>
     </div>
+  );
+}
+
+function FinancialPulse({
+  revenue,
+  expenses,
+  monthlyGap,
+  revenueGrowth,
+  expenseGrowth,
+  averageBurn,
+  burnMultiple,
+  ratio,
+}: {
+  revenue: unknown;
+  expenses: unknown;
+  monthlyGap: number;
+  revenueGrowth: unknown;
+  expenseGrowth: unknown;
+  averageBurn: unknown;
+  burnMultiple: unknown;
+  ratio: number;
+}) {
+  const deficit = monthlyGap < 0;
+  const expensePressure = number(expenseGrowth) > number(revenueGrowth);
+
+  return (
+    <section className={`panel financial-pulse ${deficit ? "pulse-deficit" : "pulse-surplus"}`}>
+      <div className="financial-pulse-header">
+        <div>
+          <div className="pulse-eyebrow">FINANCIAL PULSE</div>
+          <h3>What is driving the current position?</h3>
+        </div>
+
+        <div className={`pulse-state ${deficit ? "negative" : "positive"}`}>
+          <span />
+          {deficit ? "CASH OUTFLOW" : "CASH GENERATIVE"}
+        </div>
+      </div>
+
+      <div className="financial-pulse-main">
+        <div className="cash-flow-block">
+          <span className="pulse-label">MONTHLY REVENUE</span>
+          <strong>{money(revenue)}</strong>
+
+          <div className="pulse-bar revenue-bar">
+            <span style={{ width: `${Math.min(100, Math.max(8, (number(revenue) / Math.max(number(revenue), number(expenses), 1)) * 100))}%` }} />
+          </div>
+        </div>
+
+        <div className="cash-flow-block">
+          <span className="pulse-label">MONTHLY EXPENSES</span>
+          <strong>{money(expenses)}</strong>
+
+          <div className="pulse-bar expense-bar">
+            <span style={{ width: `${Math.min(100, Math.max(8, (number(expenses) / Math.max(number(revenue), number(expenses))) * 100))}%` }} />
+          </div>
+        </div>
+
+        <div className="cash-flow-gap">
+          <span className="pulse-label">CURRENT GAP</span>
+          <strong className={deficit ? "negative" : "positive"}>
+            {monthlyGap >= 0 ? "+" : "−"}
+            {compactMoney(Math.abs(monthlyGap))}
+          </strong>
+          <span>{deficit ? "monthly deficit" : "monthly surplus"}</span>
+        </div>
+      </div>
+
+      <div className="pulse-diagnostics">
+        <div>
+          <span>Revenue growth</span>
+          <strong className={number(revenueGrowth) >= 0 ? "positive" : "negative"}>
+            {percent(revenueGrowth)} MoM
+          </strong>
+        </div>
+
+        <div>
+          <span>Expense growth</span>
+          <strong className={expensePressure ? "negative" : "positive"}>
+            {percent(expenseGrowth)} MoM
+          </strong>
+        </div>
+
+        <div>
+          <span>Average net burn</span>
+          <strong>{money(averageBurn)}</strong>
+        </div>
+
+        <div>
+          <span>Burn multiple</span>
+          <strong>
+            {burnMultiple === null || burnMultiple === undefined
+              ? "N/A"
+              : number(burnMultiple).toFixed(2)}
+          </strong>
+        </div>
+
+        <div>
+          <span>Revenue / expense</span>
+          <strong className={ratio >= 1 ? "positive" : "negative"}>
+            {ratio.toFixed(2)}×
+          </strong>
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -1385,6 +1811,74 @@ function DecisionView({
               ))}
             </div>
           )}
+        </div>
+      </section>
+
+      <section className="panel decision-replay-panel">
+        <PanelHeader
+          title="Decision replay"
+          subtitle="How FinSight moved from evidence to a controlled decision"
+        />
+
+        <div className="decision-replay">
+          <div className="replay-step">
+            <div className="replay-node">01</div>
+            <div>
+              <span>FINANCIAL STATE</span>
+              <strong>Position assessed</strong>
+              <p>Cash, revenue, expenses, burn and runway establish the starting state.</p>
+            </div>
+          </div>
+
+          <div className="replay-step">
+            <div className="replay-node">02</div>
+            <div>
+              <span>RISK DETECTION</span>
+              <strong>Material risks ranked</strong>
+              <p>Financial signals are evaluated for liquidity, burn, growth and expense pressure.</p>
+            </div>
+          </div>
+
+          <div className="replay-step">
+            <div className="replay-node">03</div>
+            <div>
+              <span>SCENARIO SIMULATION</span>
+              <strong>Interventions compared</strong>
+              <p>Candidate scenarios are evaluated through seeded Monte Carlo simulation.</p>
+            </div>
+          </div>
+
+          <div className="replay-step">
+            <div className="replay-node">04</div>
+            <div>
+              <span>OPTIMIZATION</span>
+              <strong>Best available path selected</strong>
+              <p>Scenario outcomes are ranked using survival, downside, cash and horizon impact.</p>
+            </div>
+          </div>
+
+          <div className={`replay-step ${isBlocked ? "replay-blocked" : ""}`}>
+            <div className="replay-node">05</div>
+            <div>
+              <span>SAFETY GATE</span>
+              <strong>{isBlocked ? "Automatic execution blocked" : "Policy requirement satisfied"}</strong>
+              <p>
+                {isBlocked
+                  ? "The selected intervention does not reduce cash-shortfall probability relative to baseline."
+                  : "The selected intervention passes the configured financial safety policy."}
+              </p>
+            </div>
+          </div>
+
+          <div className={`replay-final ${isBlocked ? "replay-final-blocked" : ""}`}>
+            {isBlocked ? <ShieldCheck size={20} /> : <Check size={20} />}
+            <div>
+              <span>FINAL DECISION</span>
+              <strong>
+                {isBlocked ? "NO SAFE ACTION FOUND" : "ACTION CLEARED FOR EXECUTION"}
+              </strong>
+            </div>
+          </div>
         </div>
       </section>
 
