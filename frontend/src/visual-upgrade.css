@@ -2428,3 +2428,16 @@
     font-size: 13px !important;
   }
 }
+
+/* Trajectory label collision fix */
+.chart-value-label.baseline-value {
+  transform: translateY(18px);
+}
+
+.chart-value-label.recommended-value {
+  transform: translateY(-14px);
+}
+
+.chart-zero-label {
+  transform: translateY(-10px);
+}
