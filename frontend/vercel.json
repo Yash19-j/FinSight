@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://finsight-api-z2s3.onrender.com/:path*"
+    }
+  ]
+}
