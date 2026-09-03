@@ -1,201 +1,502 @@
-# 📊 AI Analyst
+FinSight
 
-> Quantitative startup investment risk analysis — runway forecasting, Monte Carlo survival modeling, and a weighted multi-factor health score, all from a single CSV upload.
+Financial Decision Intelligence with a Safety-Gated Action Layer
 
-Upload a startup's monthly financials. Get back a runway forecast, 12 / 18 / 24-month survival probabilities, a 0–100 investment health score, and a written investor narrative with an `INVEST` / `CAUTION` / `AVOID` verdict.
+FinSight is a financial decision intelligence system that turns financial data into ranked, simulated, policy-constrained actions.
 
----
+Its core principle is simple:
 
-## 🌐 Live Demo
+The best financial action is not always a safe action.
 
-> **Demo link:** _will be added here once deployed._
+Instead of stopping at risk detection or generating an unrestricted recommendation, FinSight evaluates possible interventions, estimates their financial consequences, applies explicit safety and policy constraints, and only creates an executable action when the intervention passes the safety gate.
 
----
+Why FinSight?
 
-## 🚀 Features
+Modern businesses increasingly automate finance operations, but financial decisions have an important asymmetry:
 
-- **Deterministic financial engine** — average burn, runway in months, revenue CAGR, growth volatility.
+A wrong automated action can make an already fragile financial position worse.
 
-- **Stability analytics** — revenue/expense growth means and volatility, with **shrinkage adjustment** for small datasets so 3-month histories don't get artificially penalized.
+For example, an intervention may improve projected ending cash while leaving the probability of cash shortfall unchanged. A naive optimizer could still execute it because it is "better than baseline."
 
-- **Capital efficiency metrics** — burn multiple, revenue-to-expense ratio, capital efficiency ratio.
+FinSight separates two questions:
 
-- **Monte Carlo runway simulation** — 5,000+ iterations using log-normal revenue growth and normal expense growth; outputs 12 / 18 / 24-month survival probabilities and mean survival horizon.
+Which intervention performs best in simulation?
 
-- **Weighted risk scoring engine** — combines four sub-scores into a final 0–100 health score with an `INVEST` / `CAUTION` / `AVOID` classification:
-  - Financial Health — **30%**
-  - Growth Stability — **30%**
-  - Capital Efficiency — **25%**
-  - Governance (founder equity) — **15%**
+Is that intervention safe enough to execute?
 
-- **Investor narrative generator** — converts the numerical output into a structured, human-readable summary suitable for a memo or deck.
+Only the second question can authorize execution.
 
-- **Streamlit UI** with sliders for founder equity and simulation runs, plus a CLI runner (`test_run.py`) for batch testing.
+This creates a decision boundary between optimization and action.
 
----
+System Architecture
 
-## 🏗️ Architecture
+                    ┌─────────────────────────────┐
+                    │     FINANCIAL INPUT DATA    │
+                    │                             │
+                    │ Cash • Revenue • Expenses   │
+                    │ Historical Financial Data   │
+                    └──────────────┬──────────────┘
+                                   │
+                                   ▼
+                    ┌─────────────────────────────┐
+                    │   FINANCIAL STATE ENGINE    │
+                    │                             │
+                    │ Burn Rate                   │
+                    │ Runway                      │
+                    │ Growth / Expense Trends     │
+                    │ Financial Ratios            │
+                    │ Data Confidence              │
+                    └──────────────┬──────────────┘
+                                   │
+                                   ▼
+                    ┌─────────────────────────────┐
+                    │       RISK DETECTOR         │
+                    │                             │
+                    │ Liquidity Risk              │
+                    │ Operating Deficit           │
+                    │ Expense Acceleration        │
+                    │ Growth Instability          │
+                    └──────────────┬──────────────┘
+                                   │
+                                   ▼
+                    ┌─────────────────────────────┐
+                    │   DETECTED DRIVER ENGINE    │
+                    │                             │
+                    │ Identifies financial        │
+                    │ signals contributing to      │
+                    │ detected risks              │
+                    └──────────────┬──────────────┘
+                                   │
+                                   ▼
+                    ┌─────────────────────────────┐
+                    │      SCENARIO ENGINE        │
+                    │                             │
+                    │ Baseline                    │
+                    │ Revenue Growth              │
+                    │ Expense Reduction           │
+                    │ Combined                    │
+                    │                             │
+                    │ Monte Carlo Simulation      │
+                    └──────────────┬──────────────┘
+                                   │
+                                   ▼
+                    ┌─────────────────────────────┐
+                    │    DECISION OPTIMIZER       │
+                    │                             │
+                    │ Survival                   │
+                    │ Downside Risk              │
+                    │ Ending Cash                │
+                    │ Survival Horizon            │
+                    │                             │
+                    │ → Rank interventions        │
+                    └──────────────┬──────────────┘
+                                   │
+                                   ▼
+              ┌────────────────────────────────────────┐
+              │       POLICY + SAFETY GATE             │
+              │                                        │
+              │  Policy Limits                         │
+              │  Confidence                            │
+              │  Capital Constraints                   │
+              │  Cash-Shortfall Safety Check           │
+              └───────────────┬────────────────────────┘
+                              │
+                    ┌─────────┴──────────┐
+                    │                    │
+                 SAFE                  UNSAFE
+                    │                    │
+                    ▼                    ▼
+       ┌─────────────────────┐   ┌─────────────────────┐
+       │   ACTION EXECUTOR   │   │   ACTION BLOCKED    │
+       │                     │   │                     │
+       │ Create bounded      │   │ No executable       │
+       │ action              │   │ action created      │
+       │                     │   │                     │
+       │ DRY_RUN             │   │ Reason recorded     │
+       └──────────┬──────────┘   └─────────────────────┘
+                  │
+                  ▼
+       ┌─────────────────────┐
+       │  OUTCOME VERIFIER   │
+       │                     │
+       │ Execution integrity │
+       │ Verification        │
+       │                     │
+       │ Does NOT fabricate  │
+       │ financial outcomes  │
+       └──────────┬──────────┘
+                  │
+                  ▼
+       ┌─────────────────────┐
+       │     AUDIT TRAIL     │
+       │                     │
+       │ Decision • Policy   │
+       │ Action • Execution  │
+       │ Verification        │
+       └─────────────────────┘
 
-```
-            ┌────────────────────┐
-   CSV ──►  │  AnalysisPipeline  │  ◄── founder_equity, simulation_runs
-            └─────────┬──────────┘
-                      │
-   ┌──────────────────┼──────────────────┬──────────────────┐
-   ▼                  ▼                  ▼                  ▼
-FinancialEngine  StabilityMetrics  EfficiencyMetrics  MonteCarloSimulation
-   │                  │                  │                  │
-   └──────────────────┴────────┬─────────┴──────────────────┘
-                               ▼
-                      RiskScoringEngine
-                               │
-                               ▼
-                       ReportGenerator
-                               │
-                               ▼
-                    Streamlit UI / CLI output
-```
+Decision Boundary
 
-Each service is a single-responsibility class with input validation, so individual stages can be tested, swapped, or reused independently.
+                     BEST AVAILABLE ACTION
+                              │
+                              ▼
+                 ┌─────────────────────────┐
+                 │   FINANCIAL SAFETY GATE │
+                 └────────────┬────────────┘
+                              │
+                    ┌─────────┴─────────┐
+                    ▼                   ▼
+                  SAFE                UNSAFE
+                    │                   │
+                    ▼                   ▼
+                 EXECUTE              BLOCK
+                    │                   │
+                    ▼                   ▼
+                 VERIFY             NO ACTION
 
----
+The optimizer and the safety gate intentionally have different responsibilities.
 
-## 🧰 Tech Stack
+Optimizer: "What looks best?"
 
-- **Python 3.9+**
-- **Streamlit** — interactive UI
-- **pandas** — data ingestion and transformation
-- **NumPy** — vectorized math and Monte Carlo sampling
+Safety gate: "What is safe enough to do?"
 
----
+Core Pipeline
 
-## 📦 Installation
+1. Financial State
 
-```bash
-# Clone the repo
-git clone https://github.com/Yash19-j/Ai-Analyst.git
-cd Ai-Analyst
+The system converts raw financial inputs into an operating state including:
 
-# Create and activate a virtual environment
-python -m venv venv
-source venv/bin/activate          # macOS / Linux
-# venv\Scripts\activate           # Windows
+Current cash
 
-# Install dependencies
-pip install -r requirements.txt
-```
+Monthly revenue
 
----
+Monthly expenses
 
-## ▶️ Usage
+Net burn
 
-### Option 1 — Streamlit web app
+Average net burn
 
-```bash
-streamlit run app.py
-```
+Runway
 
-Then open the URL Streamlit prints (typically `http://localhost:8501`), set the founder equity slider and simulation runs, upload a CSV, and click **Run Analysis**.
+Revenue growth
 
-### Option 2 — Command-line test runner
+Expense growth
 
-```bash
-python test_run.py
-```
+Revenue-to-expense ratio
 
-This loads `sample_data/failing_startup.csv` by default and prints the full analysis plus the investor narrative. Edit the `csv_path` line in `test_run.py` to point at any other file.
+Burn multiple
 
-### Input CSV format
+Data confidence
 
-Your CSV must contain these columns (at least 2 rows, ideally 6+):
+2. Risk Detection
 
-| Month | Revenue | Expenses | Cash    |
-|-------|---------|----------|---------|
-| 1     | 50000   | 80000    | 500000  |
-| 2     | 60000   | 85000    | 470000  |
-| ...   | ...     | ...      | ...     |
+FinSight evaluates financial conditions and surfaces risks such as:
 
-Two sample files are included in `sample_data/`:
+Operating deficit
 
-- `demo_startup.csv` — a healthy, growing company.
-- `failing_startup.csv` — accelerating burn, deteriorating economics.
+Liquidity pressure
 
----
+Expense acceleration
 
-## 📐 Methodology Notes
+Growth instability
 
-**Volatility shrinkage.** When the dataset has fewer than 6 points, raw standard deviation is unreliable. `StabilityMetrics` applies a multiplier (0.85 for 3–5 points, 0.7 for fewer) to dampen inflated volatility before it feeds the simulation. Data confidence is reported as `HIGH` / `MEDIUM` / `LOW` alongside every run.
+3. Detected Drivers
 
-**Monte Carlo dynamics.**
-- Revenue: log-normal with drift correction — `R_{t+1} = R_t · exp(μ − 0.5σ² + σZ)`.
-- Expenses: simple normal multiplicative growth — `E_{t+1} = E_t · (1 + g)`.
-- A run ends when cash crosses zero or hits the 60-month horizon.
+The system surfaces the financial signals associated with detected risks.
 
-**Scoring bands.**
+FinSight deliberately avoids claiming granular causal attribution when the available dataset does not contain granular operational categories.
 
-| Final Score | Classification |
-|-------------|----------------|
-| ≥ 75        | INVEST         |
-| 50 – 74     | CAUTION        |
-| < 50        | AVOID          |
+4. Scenario Simulation
 
----
+Candidate interventions are evaluated against a baseline.
 
-## 📁 Project Structure
+Current intervention classes include:
 
-```
-.
-├── app.py                          # Streamlit frontend
-├── test_run.py                     # CLI runner
-├── requirements.txt                # Python dependencies
-├── sample_data/
-│   ├── demo_startup.csv
-│   └── failing_startup.csv
-└── backend/
-    └── app/
-        └── services/
-            ├── financial_engine.py     # Burn, runway, CAGR, volatility
-            ├── stability_metrics.py    # Growth stability + shrinkage
-            ├── efficiency_metrics.py   # Burn multiple, ratios
-            ├── simulation.py           # Monte Carlo runway
-            ├── risk_scoring.py         # Weighted scoring + classification
-            ├── analysis_pipeline.py    # Orchestrator
-            └── report_generator.py     # Investor narrative
-```
+Baseline
 
----
+Revenue growth
 
-## 🛣️ Roadmap
+Expense reduction
 
-- LLM-generated qualitative summaries (currently rule-based).
-- Sector benchmarking — compare against SaaS / D2C / fintech medians.
-- PDF export of the full investor memo.
-- Scenario stress testing (e.g., revenue down 30%, expense up 20%).
-- Persistent storage for past analyses and side-by-side comparisons.
-- Public deployment on Streamlit Cloud / Hugging Face Spaces.
+Combined intervention
 
----
+The scenario engine simulates financial trajectories over the planning horizon and measures outcomes such as:
 
-## 📝 Project Status
+Ending cash
 
-This is a **learning project** built to explore quantitative finance modeling, Monte Carlo methods, and end-to-end Python application design. Feedback and suggestions are welcome.
+P10 downside
 
----
+Survival probability
 
-## 👤 Author
+Survival horizon
 
-**Yash Jindal**
+Cash-shortfall probability
 
-- LinkedIn: [linkedin.com/in/yashjindal19](https://www.linkedin.com/in/yashjindal19/)
-- Email: [jindal198yjbj@gmail.com](mailto:jindal198yjbj@gmail.com)
-- GitHub: [@Yash19-j](https://github.com/Yash19-j)
+5. Decision Optimization
 
----
+Scenarios are ranked using multiple financial dimensions rather than a single metric.
 
-## 📄 License
+The current optimizer considers:
 
-**Copyright © 2026 Yash Jindal. All Rights Reserved.**
+Survival
 
-AI Analyst is the proprietary work of Yash Jindal. No part of this codebase may be copied, modified, distributed, sublicensed, or used in any form — commercial or non-commercial — without prior written permission from the copyright holder.
+Downside
 
-For licensing inquiries, contact: **jindal198yjbj@gmail.com**
+Ending cash
+
+Survival horizon
+
+A decision score is produced to rank the available interventions.
+
+6. Policy + Financial Safety Gate
+
+The selected intervention then passes through explicit policy constraints.
+
+The financial safety gate is particularly important when the baseline has material cash-shortfall risk.
+
+If the selected intervention does not reduce the probability of cash shortfall, FinSight can block the action even when the optimizer considers it financially better than baseline.
+
+7. Action Execution
+
+Only an approved decision can produce an executable action.
+
+The current prototype supports bounded DRY_RUN execution.
+
+8. Outcome Verification
+
+The verifier checks execution integrity.
+
+It does not claim that a simulated financial improvement became real-world recovered money.
+
+This distinction prevents the system from confusing:
+
+simulated outcome
+
+with
+
+observed business outcome.
+
+Safety Example
+
+The stressed-case prototype demonstrates why the safety layer exists.
+
+The optimizer identifies Combined as the best available intervention:
+
+Decision score: 53.7
+
+Mean ending-cash improvement: approximately ₹11.57 lakh
+
+P10 improvement: approximately ₹11.6 lakh
+
+Survival horizon improvement: approximately 0.97 months
+
+However:
+
+Baseline cash-shortfall probability: 100%
+
+Selected intervention cash-shortfall probability: 100%
+
+Therefore:
+
+Optimizer
+    ↓
+Combined is best available
+    ↓
+Safety Gate
+    ↓
+Shortfall risk remains 100%
+    ↓
+BLOCK
+    ↓
+NO EXECUTABLE ACTION
+
+This is intentional behavior.
+
+"Better than baseline" is not equivalent to "safe to automate."
+
+Industry Relevance
+
+Financial operations are moving toward increasingly automated decision workflows: monitoring, forecasting, prioritization, collections, treasury operations, payment operations, and business controls.
+
+The challenge is not simply making these systems more autonomous.
+
+The harder problem is making autonomy bounded, measurable, and financially defensible.
+
+FinSight addresses that layer.
+
+Where the approach can be useful
+
+Payment & transaction businesses
+
+Large transaction volumes create a need to continuously identify financial pressure and prioritize interventions without allowing risky actions to propagate automatically.
+
+SMBs and merchants
+
+Smaller businesses often operate with tighter liquidity buffers. A recommendation that looks positive on an average-case forecast may still be dangerous if downside cash risk remains high.
+
+Finance operations
+
+Finance teams can use scenario-based decision support to move from:
+
+"Here is the problem"
+
+to:
+
+"Here are the available interventions, their simulated consequences, and the safest action we can authorize."
+
+Agentic finance systems
+
+As finance workflows become more autonomous, a separate safety layer can act as a control boundary between an AI/optimization system and actions that affect money, cash position, or business operations.
+
+Relevance to Payment-Finance Platforms
+
+FinSight is designed around a problem that naturally appears in payment and financial infrastructure:
+
+Turning financial signals into bounded actions while preserving control over financial risk.
+
+A payment-finance platform can potentially have access to high-frequency operational and financial signals across merchants and businesses. That creates an opportunity for decision systems that do more than surface dashboards.
+
+The architecture is intentionally compatible with workflows where a platform can:
+
+Observe financial signals.
+
+Detect deterioration.
+
+Simulate possible interventions.
+
+Quantify downside.
+
+Apply business and safety policies.
+
+Execute only approved actions.
+
+Verify execution and maintain an audit trail.
+
+This makes the system relevant to payment operations, merchant financial health, cash-flow decisioning, and automated finance workflows without depending on a single narrow use case.
+
+The important design principle is the control boundary:
+
+Financial intelligence can recommend. Policy decides whether automation is allowed.
+
+What FinSight Does NOT Claim
+
+FinSight is a prototype decision-intelligence system.
+
+It does not claim:
+
+Real-world financial recovery from simulation alone.
+
+Guaranteed financial outcomes.
+
+Granular causal attribution when the input data does not support it.
+
+Unrestricted autonomous financial actions.
+
+That the highest-scoring scenario is automatically safe.
+
+That dry-run execution represents an actual external transaction.
+
+These limitations are intentional. They make the decision system easier to evaluate and audit.
+
+Repository Structure
+
+FinSight/
+├── backend/
+│   ├── app/
+│   │   ├── models/
+│   │   │   ├── action.py
+│   │   │   ├── decision.py
+│   │   │   ├── financial_state.py
+│   │   │   └── intervention.py
+│   │   │
+│   │   ├── services/
+│   │   │   ├── action_executor.py
+│   │   │   ├── audit_logger.py
+│   │   │   ├── decision_optimizer.py
+│   │   │   ├── decision_pipeline.py
+│   │   │   ├── financial_state.py
+│   │   │   ├── intervention_engine.py
+│   │   │   ├── outcome_verifier.py
+│   │   │   ├── policy_engine.py
+│   │   │   ├── risk_detector.py
+│   │   │   ├── root_cause.py
+│   │   │   └── scenario_engine.py
+│   │   │
+│   │   └── utils/
+│   │
+│   └── tests/
+│
+└── frontend/
+    └── React + TypeScript dashboard
+
+Testing
+
+The backend currently has a comprehensive automated test suite covering:
+
+Financial state calculations
+
+Risk detection
+
+Scenario simulation
+
+Decision optimization
+
+Policy evaluation
+
+Safety gating
+
+Action creation
+
+Action execution
+
+Outcome verification
+
+End-to-end decision pipeline
+
+Current validation baseline:
+
+355 tests passing.
+
+The stressed-case safety behavior and healthy-case execution path have also been validated end-to-end.
+
+Design Philosophy
+
+FinSight follows five principles:
+
+1. Quantify before acting
+
+Don't execute because an intervention sounds reasonable. Simulate its financial consequences first.
+
+2. Optimize separately from authorization
+
+The mathematically best available option is not automatically an authorized action.
+
+3. Make safety measurable
+
+Safety decisions should be based on explicit financial conditions and constraints.
+
+4. Fail closed
+
+When an intervention cannot satisfy the safety requirements, create no executable action.
+
+5. Never confuse simulation with reality
+
+A simulated improvement is evidence for a decision—not proof of an actual financial outcome.
+
+One-line summary
+
+FinSight is a safety-gated financial decision engine that turns financial signals into simulated, policy-constrained actions—and knows when not to act.
+
+License
+
+Copyright (c) 2026 Yash Jindal
+
+All rights reserved.
+
+This project, including its source code, documentation, design, and associated materials, is the original work of Yash Jindal unless otherwise stated.
+
+No permission is granted to copy, modify, distribute, sublicense, or use this project or substantial portions of its source code for commercial or derivative purposes without prior written permission from the copyright holder.
+
+Third-party libraries, frameworks, datasets, and other external components remain subject to their respective licenses.
+
+For permission requests, please contact the repository owner.
