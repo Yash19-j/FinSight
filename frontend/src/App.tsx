@@ -33,7 +33,7 @@ type View =
 
 const NAV_ITEMS: { id: View; label: string; icon: typeof Activity }[] = [
   { id: "overview", label: "Overview", icon: Gauge },
-  { id: "risks", label: "Risks & Causes", icon: AlertTriangle },
+  { id: "risks", label: "Risks & Drivers", icon: AlertTriangle },
   { id: "scenarios", label: "Scenarios", icon: BarChart3 },
   { id: "decision", label: "Decision", icon: Target },
   { id: "execution", label: "Execution", icon: Zap },
@@ -76,6 +76,21 @@ function percent(value: unknown): string {
   return `${(number(value) * 100).toFixed(1)}%`;
 }
 
+function confidenceLabel(value: unknown): string {
+  const raw = String(value ?? "").toUpperCase();
+
+  if (raw === "HIGH") return "High";
+  if (raw === "MEDIUM") return "Medium";
+  if (raw === "LOW") return "Low";
+
+  const n = number(value, NaN);
+
+  if (!Number.isFinite(n)) return "—";
+  if (n >= 0.8) return "High";
+  if (n >= 0.6) return "Medium";
+  return "Low";
+}
+
 function months(value: unknown): string {
   const n = number(value);
 
@@ -88,6 +103,24 @@ function titleCase(value: unknown): string {
   return String(value ?? "")
     .replaceAll("_", " ")
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function displayName(
+  object: AnyObject | null | undefined,
+  fallback = "Unknown",
+): string {
+  if (!object) return fallback;
+
+  const value =
+    object.name ??
+    object.scenario_name ??
+    object.title ??
+    object.scenario_id ??
+    object.cause_id;
+
+  const result = String(value ?? "").trim();
+
+  return result ? titleCase(result) : fallback;
 }
 
 function severityClass(severity: string): string {
@@ -216,10 +249,12 @@ function App() {
   const scenarioRows: AnyObject[] = useMemo(() => {
     return scenarios.map((scenario: AnyObject) => ({
       ...scenario,
+
       displayName:
         scenario.name ??
         scenario.scenario_name ??
         titleCase(scenario.scenario_id),
+
       survival: scenarioMetric(
         scenario,
         [
@@ -229,6 +264,7 @@ function App() {
         ],
         0,
       ),
+
       endingCash: scenarioMetric(
         scenario,
         [
@@ -240,21 +276,54 @@ function App() {
         ],
         0,
       ),
+
       p10: scenarioMetric(
         scenario,
         ["ending_cash_p10", "p10_ending_cash", "p10_cash"],
         0,
       ),
+
       p90: scenarioMetric(
         scenario,
         ["ending_cash_p90", "p90_ending_cash", "p90_cash"],
         0,
       ),
+
+      shortfall: scenarioMetric(
+        scenario,
+        [
+          "probability_of_cash_shortfall",
+          "cash_shortfall_probability",
+          "shortfall_probability",
+        ],
+        0,
+      ),
     }));
   }, [scenarios]);
 
-  const baselineCash =
-    scenarioRows.find((scenario: AnyObject) => scenario.baseline)?.endingCash ?? 0;
+  const baselineScenario =
+    scenarioRows.find((scenario: AnyObject) => scenario.baseline) ??
+    scenarioRows.find(
+      (scenario: AnyObject) => scenario.scenario_id === "baseline",
+    );
+
+  const baselineCash = baselineScenario?.endingCash ?? 0;
+
+  const baselineShortfall = baselineScenario?.shortfall ?? 0;
+
+  const selectedScenario = scenarioRows.find(
+    (scenario: AnyObject) =>
+      scenario.scenario_id === recommendedScenario.scenario_id,
+  );
+
+  const selectedShortfall =
+    selectedScenario?.shortfall ??
+    (recommendedScenario?.probability_of_cash_shortfall != null
+      ? number(recommendedScenario.probability_of_cash_shortfall)
+      : null);
+
+  const isBlocked =
+    String(policy.status ?? "").toUpperCase() === "BLOCK";
 
   if (loading) {
     return (
@@ -262,8 +331,11 @@ function App() {
         <div className="loading-mark">
           <Sparkles size={25} />
         </div>
+
         <h1>FinSight</h1>
+
         <p>Building your financial decision brief...</p>
+
         <Loader2 className="spin" size={22} />
       </div>
     );
@@ -279,7 +351,9 @@ function App() {
 
           <div>
             <div className="brand-name">FinSight</div>
-            <div className="brand-subtitle">Decision Intelligence</div>
+            <div className="brand-subtitle">
+              Decision Intelligence
+            </div>
           </div>
         </div>
 
@@ -302,6 +376,7 @@ function App() {
                 onClick={() => setActiveView(item.id)}
               >
                 <Icon size={18} />
+
                 <span>{item.label}</span>
 
                 {item.id === "risks" && risks.length > 0 && (
@@ -323,6 +398,7 @@ function App() {
             ) : (
               <Upload size={18} />
             )}
+
             {uploading ? "Analyzing..." : "Analyze CSV"}
           </button>
 
@@ -333,7 +409,10 @@ function App() {
             hidden
             onChange={(event) => {
               const file = event.target.files?.[0];
-              if (file) uploadCsv(file);
+
+              if (file) {
+                uploadCsv(file);
+              }
             }}
           />
 
@@ -347,14 +426,20 @@ function App() {
       <main className="main-content">
         <header className="topbar">
           <div>
-            <div className="eyebrow">FINANCIAL CONTROL CENTER</div>
+            <div className="eyebrow">
+              FINANCIAL CONTROL CENTER
+            </div>
+
             <h1>{pageTitle(activeView)}</h1>
           </div>
 
           <div className="topbar-actions">
             <div className="data-confidence">
               <span>Data confidence</span>
-              <strong>{financialState.data_confidence ?? "—"}</strong>
+
+              <strong>
+                {confidenceLabel(financialState.data_confidence)}
+              </strong>
             </div>
 
             <button
@@ -370,7 +455,9 @@ function App() {
         {error && (
           <div className="error-banner">
             <AlertTriangle size={18} />
+
             <span>{error}</span>
+
             <button onClick={() => setError("")}>
               <X size={16} />
             </button>
@@ -389,12 +476,16 @@ function App() {
                 policy={policy}
                 recommendedScenario={recommendedScenario}
                 highestRisk={highestRisk}
+                isBlocked={isBlocked}
                 onNavigate={setActiveView}
               />
             )}
 
             {activeView === "risks" && (
-              <RisksView risks={risks} rootCauses={rootCauses} />
+              <RisksView
+                risks={risks}
+                rootCauses={rootCauses}
+              />
             )}
 
             {activeView === "scenarios" && (
@@ -411,6 +502,8 @@ function App() {
                 policy={policy}
                 action={action}
                 recommendedScenario={recommendedScenario}
+                baselineShortfall={baselineShortfall}
+                selectedShortfall={selectedShortfall}
               />
             )}
 
@@ -419,6 +512,7 @@ function App() {
                 action={action}
                 execution={execution}
                 verification={verification}
+                policy={policy}
               />
             )}
           </>
@@ -432,12 +526,16 @@ function pageTitle(view: View): string {
   switch (view) {
     case "overview":
       return "Financial Overview";
+
     case "risks":
-      return "Risks & Root Causes";
+      return "Risks & Detected Drivers";
+
     case "scenarios":
       return "Scenario Engine";
+
     case "decision":
       return "Decision Center";
+
     case "execution":
       return "Execution & Verification";
   }
@@ -450,6 +548,7 @@ function Overview({
   policy,
   recommendedScenario,
   highestRisk,
+  isBlocked,
   onNavigate,
 }: {
   state: AnyObject;
@@ -458,6 +557,7 @@ function Overview({
   policy: AnyObject;
   recommendedScenario: AnyObject;
   highestRisk?: AnyObject;
+  isBlocked: boolean;
   onNavigate: (view: View) => void;
 }) {
   const runway = state.runway_months;
@@ -483,16 +583,26 @@ function Overview({
           </h2>
 
           <p>
-            FinSight converts raw financial history into a risk-aware,
-            policy-gated action.
+            FinSight converts raw financial history into a
+            risk-aware, policy-gated action.
           </p>
         </div>
 
         <div className="hero-decision">
           <div className="mini-label">CURRENT DECISION</div>
-          <div className="decision-status">
+
+          <div
+            className={`decision-status ${
+              isBlocked ? "blocked-status" : ""
+            }`}
+          >
             <span className="status-pulse" />
-            {policy.status ?? decision.status ?? "ANALYZED"}
+
+            {isBlocked
+              ? "BLOCKED"
+              : policy.status ??
+                decision.status ??
+                "ANALYZED"}
           </div>
 
           <button onClick={() => onNavigate("decision")}>
@@ -525,9 +635,13 @@ function Overview({
 
         <MetricCard
           label="Revenue / expense"
-          value={number(state.revenue_expense_ratio).toFixed(2)}
+          value={number(
+            state.revenue_expense_ratio,
+          ).toFixed(2)}
           icon={<Activity size={18} />}
-          warning={number(state.revenue_expense_ratio) < 1}
+          warning={
+            number(state.revenue_expense_ratio) < 1
+          }
         />
       </section>
 
@@ -573,7 +687,9 @@ function Overview({
         <div className="panel risk-panel">
           <PanelHeader
             title="Priority risk"
-            subtitle={`${risks.length} detected risk${risks.length === 1 ? "" : "s"}`}
+            subtitle={`${risks.length} detected risk${
+              risks.length === 1 ? "" : "s"
+            }`}
             action={
               <button
                 className="text-button"
@@ -587,28 +703,40 @@ function Overview({
           {highestRisk ? (
             <div className="priority-risk">
               <div className="risk-heading">
-                <span className={severityClass(highestRisk.severity)}>
+                <span
+                  className={severityClass(
+                    highestRisk.severity,
+                  )}
+                >
                   {highestRisk.severity}
                 </span>
+
                 <span className="risk-category">
                   {titleCase(highestRisk.category)}
                 </span>
               </div>
 
               <h3>{highestRisk.title}</h3>
+
               <p>{highestRisk.evidence}</p>
 
               <div className="risk-footer">
                 <span>
                   Confidence{" "}
-                  <strong>{percent(highestRisk.confidence)}</strong>
+                  <strong>
+                    {confidenceLabel(
+                      highestRisk.confidence,
+                    )}
+                  </strong>
                 </span>
 
                 {highestRisk.financial_impact != null && (
                   <span>
                     Impact{" "}
                     <strong>
-                      {compactMoney(highestRisk.financial_impact)}
+                      {compactMoney(
+                        highestRisk.financial_impact,
+                      )}
                     </strong>
                   </span>
                 )}
@@ -617,29 +745,61 @@ function Overview({
           ) : (
             <div className="no-risk">
               <ShieldCheck size={30} />
-              <strong>No material risks detected</strong>
-              <span>The current financial state is within thresholds.</span>
+
+              <strong>
+                No material risks detected
+              </strong>
+
+              <span>
+                The current financial state is within
+                thresholds.
+              </span>
             </div>
           )}
         </div>
       </section>
 
-      <section className="decision-strip">
+      <section
+        className={`decision-strip ${
+          isBlocked ? "blocked" : ""
+        }`}
+      >
         <div className="decision-strip-icon">
-          <Target size={22} />
+          {isBlocked ? (
+            <ShieldCheck size={22} />
+          ) : (
+            <Target size={22} />
+          )}
         </div>
 
         <div className="decision-strip-content">
-          <div className="mini-label">RECOMMENDED PATH</div>
+          <div className="mini-label">
+            {isBlocked
+              ? "NO SAFE ACTION FOUND"
+              : "RECOMMENDED PATH"}
+          </div>
+
           <h3>
-            {recommendedScenario.name ??
-              recommendedScenario.scenario_name ??
-              titleCase(recommendedScenario.scenario_id) ??
-              "No intervention"}
+            {isBlocked
+              ? "Automatic execution blocked"
+              : displayName(
+                  recommendedScenario,
+                  "No intervention",
+                )}
           </h3>
+
           <p>
-            {recommendedScenario.description ??
-              "FinSight evaluated the available intervention scenarios."}
+            {isBlocked
+              ? policy?.policy?.violations?.[0] ??
+                policy?.reasoning?.find(
+                  (item: string) =>
+                    item
+                      .toLowerCase()
+                      .includes("blocked"),
+                ) ??
+                "The selected intervention does not satisfy the financial safety policy."
+              : recommendedScenario.description ??
+                "FinSight evaluated the available intervention scenarios."}
           </p>
         </div>
 
@@ -651,14 +811,18 @@ function Overview({
 
           <div>
             <span>Confidence</span>
+
             <strong>
-              {decision.confidence != null
-                ? percent(decision.confidence)
-                : "—"}
+              {confidenceLabel(
+                state.data_confidence ??
+                  decision.confidence,
+              )}
             </strong>
           </div>
 
-          <button onClick={() => onNavigate("decision")}>
+          <button
+            onClick={() => onNavigate("decision")}
+          >
             Inspect
             <ChevronRight size={17} />
           </button>
@@ -680,10 +844,12 @@ function RisksView({
       <div className="section-intro">
         <div>
           <div className="eyebrow">DETECTION LAYER</div>
+
           <h2>What could hurt the business?</h2>
+
           <p>
-            Deterministic risk signals are ranked by severity, financial
-            impact and confidence.
+            Deterministic risk signals are ranked by
+            severity, financial impact and confidence.
           </p>
         </div>
 
@@ -701,43 +867,70 @@ function RisksView({
           </div>
         ) : (
           risks.map((risk, index) => (
-            <div className="risk-card" key={risk.risk_id ?? index}>
+            <div
+              className="risk-card"
+              key={risk.risk_id ?? index}
+            >
               <div className="risk-card-index">
-                {(index + 1).toString().padStart(2, "0")}
+                {(index + 1)
+                  .toString()
+                  .padStart(2, "0")}
               </div>
 
               <div className="risk-card-main">
                 <div className="risk-heading">
-                  <span className={severityClass(risk.severity)}>
+                  <span
+                    className={severityClass(
+                      risk.severity,
+                    )}
+                  >
                     {risk.severity}
                   </span>
+
                   <span className="risk-category">
                     {titleCase(risk.category)}
                   </span>
                 </div>
 
                 <h3>{risk.title}</h3>
+
                 <p>{risk.evidence}</p>
 
                 <div className="risk-details">
                   <span>
-                    Metric <strong>{titleCase(risk.metric)}</strong>
+                    Metric{" "}
+                    <strong>
+                      {titleCase(risk.metric)}
+                    </strong>
                   </span>
 
                   {risk.current_value != null && (
                     <span>
                       Current{" "}
                       <strong>
-                        {risk.metric?.includes("growth") ||
-                        risk.metric?.includes("volatility")
-                          ? percent(risk.current_value)
-                          : number(risk.current_value).toFixed(2)}
+                        {risk.metric?.includes(
+                          "growth",
+                        ) ||
+                        risk.metric?.includes(
+                          "volatility",
+                        )
+                          ? percent(
+                              risk.current_value,
+                            )
+                          : number(
+                              risk.current_value,
+                            ).toFixed(2)}
                       </strong>
                     </span>
                   )}
 
                   <span>
-                    Confidence <strong>{percent(risk.confidence)}</strong>
+                    Confidence{" "}
+                    <strong>
+                      {confidenceLabel(
+                        risk.confidence,
+                      )}
+                    </strong>
                   </span>
                 </div>
               </div>
@@ -748,33 +941,62 @@ function RisksView({
 
       <section className="panel root-cause-panel">
         <PanelHeader
-          title="Root cause analysis"
-          subtitle="Why these signals exist"
+          title="Detected drivers"
+          subtitle="Evidence behind the identified risks"
         />
 
         {rootCauses.length === 0 ? (
           <div className="muted-block">
-            No root causes were returned by the analysis pipeline.
+            No detected drivers were returned by
+            the analysis pipeline.
           </div>
         ) : (
           <div className="cause-grid">
             {rootCauses.map((cause, index) => (
-              <div className="cause-card" key={cause.cause_id ?? index}>
-                <div className="cause-number">{index + 1}</div>
+              <div
+                className="cause-card"
+                key={cause.cause_id ?? index}
+              >
+                <div className="cause-number">
+                  {index + 1}
+                </div>
+
                 <div>
                   <h3>
                     {cause.title ??
                       cause.name ??
-                      titleCase(cause.cause_id) ??
-                      "Root cause"}
+                      titleCase(
+                        cause.cause_id,
+                      ) ??
+                      "Detected driver"}
                   </h3>
+
                   <p>
                     {cause.explanation ??
                       cause.description ??
+                      cause.root_cause ??
                       cause.evidence ??
                       cause.reason ??
-                      "The pipeline identified this as a contributing factor."}
+                      "The pipeline identified this as a contributing financial factor."}
                   </p>
+
+                  {cause.contributing_factors
+                    ?.length > 0 && (
+                    <div className="factor-list">
+                      {cause.contributing_factors.map(
+                        (
+                          factor: string,
+                          factorIndex: number,
+                        ) => (
+                          <span
+                            key={factorIndex}
+                          >
+                            {factor}
+                          </span>
+                        ),
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -798,11 +1020,15 @@ function ScenariosView({
     <div className="page">
       <div className="section-intro">
         <div>
-          <div className="eyebrow">COUNTERFACTUAL ENGINE</div>
+          <div className="eyebrow">
+            COUNTERFACTUAL ENGINE
+          </div>
+
           <h2>Don't guess. Compare.</h2>
+
           <p>
-            FinSight simulates explicit intervention assumptions before
-            recommending a path.
+            FinSight simulates explicit intervention
+            assumptions before recommending a path.
           </p>
         </div>
 
@@ -815,20 +1041,23 @@ function ScenariosView({
       <div className="scenario-grid">
         {scenarios.map((scenario, index) => {
           const recommended =
-            scenario.scenario_id === recommendedScenario.scenario_id;
+            scenario.scenario_id ===
+            recommendedScenario.scenario_id;
 
           const delta =
             scenario.endingCash - baselineCash;
 
           return (
             <div
-              className={`scenario-card ${recommended ? "recommended" : ""}`}
+              className={`scenario-card ${
+                recommended ? "recommended" : ""
+              }`}
               key={scenario.scenario_id ?? index}
             >
               {recommended && (
                 <div className="recommended-tag">
                   <Check size={13} />
-                  RECOMMENDED
+                  BEST AVAILABLE
                 </div>
               )}
 
@@ -843,6 +1072,7 @@ function ScenariosView({
 
                 <div>
                   <h3>{scenario.displayName}</h3>
+
                   <span>
                     {scenario.duration_months
                       ? `${scenario.duration_months}-month intervention`
@@ -860,18 +1090,47 @@ function ScenariosView({
 
               <div className="scenario-main-metric">
                 <span>Median ending cash</span>
-                <strong>{compactMoney(scenario.endingCash)}</strong>
+
+                <strong>
+                  {compactMoney(
+                    scenario.endingCash,
+                  )}
+                </strong>
               </div>
 
               <div className="scenario-stats">
                 <div>
                   <span>Survival</span>
-                  <strong>{percent(scenario.survival)}</strong>
+
+                  <strong>
+                    {percent(scenario.survival)}
+                  </strong>
+                </div>
+
+                <div>
+                  <span>Shortfall risk</span>
+
+                  <strong
+                    className={
+                      scenario.shortfall >= 0.5
+                        ? "negative"
+                        : "positive"
+                    }
+                  >
+                    {percent(scenario.shortfall)}
+                  </strong>
                 </div>
 
                 <div>
                   <span>vs baseline</span>
-                  <strong className={delta >= 0 ? "positive" : "negative"}>
+
+                  <strong
+                    className={
+                      delta >= 0
+                        ? "positive"
+                        : "negative"
+                    }
+                  >
                     {delta >= 0 ? "+" : ""}
                     {compactMoney(delta)}
                   </strong>
@@ -892,7 +1151,8 @@ function ScenariosView({
                         8,
                         Math.min(
                           92,
-                          scenario.survival * 100,
+                          scenario.survival *
+                            100,
                         ),
                       )}%`,
                     }}
@@ -900,8 +1160,13 @@ function ScenariosView({
                 </div>
 
                 <div className="range-values">
-                  <span>{compactMoney(scenario.p10)}</span>
-                  <span>{compactMoney(scenario.p90)}</span>
+                  <span>
+                    {compactMoney(scenario.p10)}
+                  </span>
+
+                  <span>
+                    {compactMoney(scenario.p90)}
+                  </span>
                 </div>
               </div>
             </div>
@@ -911,10 +1176,12 @@ function ScenariosView({
 
       <div className="method-note">
         <ShieldCheck size={17} />
+
         <span>
-          Scenario outputs are probabilistic estimates conditional on the
-          current financial state and explicit assumptions — not guaranteed
-          forecasts.
+          Scenario outputs are probabilistic
+          estimates conditional on the current
+          financial state and explicit assumptions —
+          not guaranteed forecasts.
         </span>
       </div>
     </div>
@@ -926,48 +1193,130 @@ function DecisionView({
   policy,
   action,
   recommendedScenario,
+  baselineShortfall,
+  selectedShortfall,
 }: {
   decision: AnyObject;
   policy: AnyObject;
   action: AnyObject | null;
   recommendedScenario: AnyObject;
+  baselineShortfall: number;
+  selectedShortfall: number | null;
 }) {
+  const isBlocked =
+    String(policy.status ?? "").toUpperCase() ===
+    "BLOCK";
+
   const reasoning: string[] =
     decision.reasoning ??
     policy.reasoning ??
     action?.reasoning ??
     [];
 
+  const violation =
+    policy?.policy?.violations?.[0] ??
+    (isBlocked
+      ? "Automatic execution is blocked under the configured policy."
+      : null);
+
+  const survivalImprovement =
+    recommendedScenario?.survival_improvement ?? 0;
+
+  const downsideImprovement =
+    recommendedScenario?.downside_improvement ?? 0;
+
+  const endingCashImprovement =
+    recommendedScenario?.ending_cash_improvement ?? 0;
+
+  const survivalHorizonImprovement =
+    recommendedScenario?.survival_horizon_improvement ??
+    0;
+
+  const shortfallImprovement =
+    baselineShortfall -
+    number(selectedShortfall, baselineShortfall);
+
+  const shortfallReduced =
+    selectedShortfall != null &&
+    selectedShortfall < baselineShortfall;
+
   return (
     <div className="page">
       <div className="section-intro">
         <div>
           <div className="eyebrow">DECISION LAYER</div>
-          <h2>What should happen next?</h2>
+
+          <h2>
+            {isBlocked
+              ? "The safest decision is to stop."
+              : "What should happen next?"}
+          </h2>
+
           <p>
-            The optimizer chooses a scenario; the policy engine decides
-            whether that action is allowed.
+            The optimizer chooses a scenario; the policy
+            engine decides whether that action is allowed.
           </p>
         </div>
 
-        <div className={`policy-pill ${String(policy.status).toLowerCase()}`}>
+        <div
+          className={`policy-pill ${
+            isBlocked ? "block" : "approve"
+          }`}
+        >
           <span />
           {policy.status ?? "UNKNOWN"}
         </div>
       </div>
 
-      <section className="decision-main">
-        <div className="decision-recommendation">
-          <div className="recommendation-icon">
-            <Target size={28} />
+      {isBlocked && (
+        <section className="safe-action-banner">
+          <div className="safe-action-icon">
+            <ShieldCheck size={30} />
           </div>
 
-          <div className="mini-label">RECOMMENDED SCENARIO</div>
+          <div>
+            <div className="mini-label">
+              FINANCIAL SAFETY GATE
+            </div>
+
+            <h2>NO SAFE ACTION FOUND</h2>
+
+            <p>
+              The optimizer found a best available
+              intervention, but the selected intervention
+              does not adequately mitigate the current
+              financial risk. Automatic execution has
+              therefore been blocked.
+            </p>
+          </div>
+        </section>
+      )}
+
+      <section className="decision-main">
+        <div
+          className={`decision-recommendation ${
+            isBlocked ? "blocked-recommendation" : ""
+          }`}
+        >
+          <div className="recommendation-icon">
+            {isBlocked ? (
+              <ShieldCheck size={28} />
+            ) : (
+              <Target size={28} />
+            )}
+          </div>
+
+          <div className="mini-label">
+            {isBlocked
+              ? "BEST AVAILABLE INTERVENTION"
+              : "RECOMMENDED SCENARIO"}
+          </div>
 
           <h2>
-            {recommendedScenario.name ??
-              recommendedScenario.scenario_name ??
-              titleCase(recommendedScenario.scenario_id)}
+            {displayName(
+              recommendedScenario,
+              "No intervention",
+            )}
           </h2>
 
           <p>
@@ -977,19 +1326,37 @@ function DecisionView({
 
           <div className="recommendation-metrics">
             <div>
-              <span>Decision confidence</span>
+              <span>Decision score</span>
+
               <strong>
-                {decision.confidence != null
-                  ? percent(decision.confidence)
-                  : action?.confidence != null
-                    ? percent(action.confidence)
-                    : "—"}
+                {recommendedScenario.decision_score !=
+                null
+                  ? number(
+                      recommendedScenario.decision_score,
+                    ).toFixed(1)
+                  : "—"}
               </strong>
             </div>
 
             <div>
-              <span>Policy status</span>
-              <strong>{policy.status ?? "—"}</strong>
+              <span>Classification</span>
+
+              <strong>
+                {recommendedScenario.classification ??
+                  "—"}
+              </strong>
+            </div>
+
+            <div>
+              <span>Data confidence</span>
+
+              <strong>
+                {confidenceLabel(
+                  recommendedScenario.data_confidence ??
+                    decision.data_confidence ??
+                    recommendedScenario.confidence,
+                )}
+              </strong>
             </div>
           </div>
         </div>
@@ -1007,8 +1374,12 @@ function DecisionView({
           ) : (
             <div className="reasoning-list">
               {reasoning.map((item, index) => (
-                <div className="reasoning-item" key={index}>
+                <div
+                  className="reasoning-item"
+                  key={index}
+                >
                   <span>{index + 1}</span>
+
                   <p>{item}</p>
                 </div>
               ))}
@@ -1017,10 +1388,155 @@ function DecisionView({
         </div>
       </section>
 
+      <section className="panel impact-panel">
+        <PanelHeader
+          title="Intervention impact"
+          subtitle={
+            isBlocked
+              ? "Best available improvement — not sufficient for safe execution"
+              : "Expected financial effect of the selected path"
+          }
+        />
+
+        <div className="impact-grid">
+          <ImpactMetric
+            label="P10 cash improvement"
+            value={
+              downsideImprovement > 0
+                ? `+${compactMoney(
+                    downsideImprovement,
+                  )}`
+                : compactMoney(
+                    downsideImprovement,
+                  )
+            }
+            positive={downsideImprovement > 0}
+          />
+
+          <ImpactMetric
+            label="Mean cash improvement"
+            value={
+              endingCashImprovement > 0
+                ? `+${compactMoney(
+                    endingCashImprovement,
+                  )}`
+                : compactMoney(
+                    endingCashImprovement,
+                  )
+            }
+            positive={endingCashImprovement > 0}
+          />
+
+          <ImpactMetric
+            label="Survival horizon"
+            value={`${
+              survivalHorizonImprovement >= 0
+                ? "+"
+                : ""
+            }${number(
+              survivalHorizonImprovement,
+            ).toFixed(2)} mo`}
+            positive={survivalHorizonImprovement > 0}
+          />
+
+          <ImpactMetric
+            label="Survival probability"
+            value={percent(survivalImprovement)}
+            positive={survivalImprovement > 0}
+          />
+        </div>
+      </section>
+
+      <section
+        className={`panel safety-comparison ${
+          isBlocked ? "safety-blocked" : ""
+        }`}
+      >
+        <PanelHeader
+          title="Financial safety check"
+          subtitle="Does the selected intervention actually reduce cash-shortfall risk?"
+        />
+
+        <div className="safety-grid">
+          <div className="safety-column baseline-column">
+            <span>BASELINE</span>
+
+            <strong>
+              {percent(baselineShortfall)}
+            </strong>
+
+            <small>
+              Probability of cash shortfall
+            </small>
+          </div>
+
+          <div className="safety-arrow">
+            <ChevronRight size={22} />
+          </div>
+
+          <div
+            className={`safety-column ${
+              shortfallReduced
+                ? "safety-improved"
+                : "safety-failed"
+            }`}
+          >
+            <span>SELECTED INTERVENTION</span>
+
+            <strong>
+              {selectedShortfall != null
+                ? percent(selectedShortfall)
+                : "—"}
+            </strong>
+
+            <small>
+              Probability of cash shortfall
+            </small>
+          </div>
+        </div>
+
+        <div
+          className={`safety-result ${
+            shortfallReduced
+              ? "safety-result-pass"
+              : "safety-result-fail"
+          }`}
+        >
+          {shortfallReduced ? (
+            <Check size={18} />
+          ) : (
+            <AlertTriangle size={18} />
+          )}
+
+          <div>
+            <strong>
+              {shortfallReduced
+                ? "Safety requirement satisfied"
+                : "Safety requirement not satisfied"}
+            </strong>
+
+            <p>
+              {shortfallReduced
+                ? `Cash-shortfall probability improves by ${percent(
+                    shortfallImprovement,
+                  )}.`
+                : violation ??
+                  "The selected intervention does not reduce the probability of cash shortfall relative to baseline."}
+            </p>
+          </div>
+        </div>
+      </section>
+
       <section className="panel action-panel">
         <PanelHeader
-          title="Approved action"
-          subtitle="Policy-gated intervention"
+          title={
+            isBlocked ? "Action gate" : "Approved action"
+          }
+          subtitle={
+            isBlocked
+              ? "Policy prevented executable action creation"
+              : "Policy-gated intervention"
+          }
         />
 
         {action ? (
@@ -1038,39 +1554,65 @@ function DecisionView({
                 </h3>
 
                 <p>
-                  This action was constructed from the policy engine's
-                  approved action.
+                  This action was constructed from the
+                  policy engine's approved action.
                 </p>
               </div>
             </div>
 
             <div className="parameter-grid">
-              {Object.entries(action.parameters ?? {}).map(
-                ([key, value]) => (
-                  <div className="parameter" key={key}>
-                    <span>{titleCase(key)}</span>
-                    <strong>
-                      {typeof value === "number"
-                        ? key.includes("adjustment") ||
-                          key.includes("reduction")
-                          ? percent(value)
-                          : key.includes("cash")
-                            ? money(value)
-                            : value
-                        : String(value)}
-                    </strong>
-                  </div>
-                ),
-              )}
+              {Object.entries(
+                action.parameters ?? {},
+              ).map(([key, value]) => (
+                <div
+                  className="parameter"
+                  key={key}
+                >
+                  <span>{titleCase(key)}</span>
+
+                  <strong>
+                    {typeof value === "number"
+                      ? key.includes(
+                          "adjustment",
+                        ) ||
+                        key.includes(
+                          "reduction",
+                        )
+                        ? percent(value)
+                        : key.includes("cash")
+                          ? money(value)
+                          : value
+                      : String(value)}
+                  </strong>
+                </div>
+              ))}
             </div>
           </div>
         ) : (
-          <div className="blocked-action">
-            <ShieldCheck size={25} />
+          <div
+            className={`blocked-action ${
+              isBlocked
+                ? "safety-block"
+                : ""
+            }`}
+          >
+            {isBlocked ? (
+              <ShieldCheck size={25} />
+            ) : (
+              <AlertTriangle size={25} />
+            )}
+
             <div>
-              <strong>No external action approved</strong>
+              <strong>
+                {isBlocked
+                  ? "NO EXECUTABLE ACTION CREATED"
+                  : "No external action approved"}
+              </strong>
+
               <p>
-                The policy engine did not produce an executable intervention.
+                {isBlocked
+                  ? violation
+                  : "The policy engine did not produce an executable intervention."}
               </p>
             </div>
           </div>
@@ -1080,26 +1622,166 @@ function DecisionView({
   );
 }
 
+function ImpactMetric({
+  label,
+  value,
+  positive,
+}: {
+  label: string;
+  value: string;
+  positive: boolean;
+}) {
+  return (
+    <div
+      className={`impact-metric-card ${
+        positive ? "impact-positive" : ""
+      }`}
+    >
+      <span>{label}</span>
+
+      <strong>{value}</strong>
+
+      <div className="impact-indicator">
+        {positive ? (
+          <ArrowUpRight size={13} />
+        ) : (
+          <ArrowDownRight size={13} />
+        )}
+
+        <span>
+          {positive
+            ? "Improvement"
+            : "No improvement"}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 function ExecutionView({
   action,
   execution,
   verification,
+  policy,
 }: {
   action: AnyObject | null;
   execution: AnyObject | null;
   verification: AnyObject | null;
+  policy: AnyObject;
 }) {
-  const verified = verification?.verified === true;
+  const isBlocked =
+    String(policy.status ?? "").toUpperCase() ===
+    "BLOCK";
+
+  const verified =
+    verification?.verified === true;
+
+  if (isBlocked || !action) {
+    return (
+      <div className="page">
+        <div className="section-intro">
+          <div>
+            <div className="eyebrow">
+              CONTROLLED EXECUTION
+            </div>
+
+            <h2>
+              Execution stopped by policy.
+            </h2>
+
+            <p>
+              FinSight will not construct or execute
+              an action when the financial safety gate
+              blocks the selected intervention.
+            </p>
+          </div>
+
+          <div className="policy-pill block">
+            <span />
+            BLOCKED
+          </div>
+        </div>
+
+        <section className="execution-blocked-card">
+          <div className="execution-blocked-icon">
+            <ShieldCheck size={34} />
+          </div>
+
+          <div>
+            <div className="mini-label">
+              EXECUTION CONTROL
+            </div>
+
+            <h2>NO ACTION WAS EXECUTED</h2>
+
+            <p>
+              The optimizer identified the best
+              available scenario, but the policy engine
+              rejected automatic execution because the
+              intervention did not reduce
+              cash-shortfall probability.
+            </p>
+
+            <div className="execution-blocked-reason">
+              <AlertTriangle size={17} />
+
+              <span>
+                {policy?.policy?.violations?.[0] ??
+                  "Automatic execution is blocked under the configured policy."}
+              </span>
+            </div>
+          </div>
+        </section>
+
+        <section className="execution-timeline">
+          <TimelineStep
+            number="01"
+            title="Decision evaluated"
+            description="The optimizer compared the available intervention scenarios."
+            complete
+          />
+
+          <TimelineStep
+            number="02"
+            title="Policy evaluated"
+            description="The financial safety gate rejected automatic execution."
+            complete
+          />
+
+          <TimelineStep
+            number="03"
+            title="Action construction"
+            description="Skipped because no approved action exists."
+            complete={false}
+          />
+
+          <TimelineStep
+            number="04"
+            title="Execution"
+            description="Skipped. No external system was modified."
+            complete={false}
+            last
+          />
+        </section>
+      </div>
+    );
+  }
 
   return (
     <div className="page">
       <div className="section-intro">
         <div>
-          <div className="eyebrow">CONTROLLED EXECUTION</div>
-          <h2>From recommendation to action.</h2>
+          <div className="eyebrow">
+            CONTROLLED EXECUTION
+          </div>
+
+          <h2>
+            From recommendation to action.
+          </h2>
+
           <p>
-            FinSight currently operates in dry-run mode. Nothing external is
-            modified.
+            FinSight currently operates in dry-run
+            mode. Nothing external is modified.
           </p>
         </div>
 
@@ -1142,16 +1824,27 @@ function ExecutionView({
 
       <section className="verification-card">
         <div
-          className={`verification-icon ${verified ? "verified" : "failed"}`}
+          className={`verification-icon ${
+            verified ? "verified" : "failed"
+          }`}
         >
-          {verified ? <Check size={30} /> : <AlertTriangle size={30} />}
+          {verified ? (
+            <Check size={30} />
+          ) : (
+            <AlertTriangle size={30} />
+          )}
         </div>
 
         <div className="verification-copy">
-          <div className="mini-label">VERIFICATION RESULT</div>
+          <div className="mini-label">
+            VERIFICATION RESULT
+          </div>
+
           <h2>
             {verification?.status ??
-              (action ? "Awaiting execution" : "No action")}
+              (action
+                ? "Awaiting execution"
+                : "No action")}
           </h2>
 
           <p>
@@ -1164,14 +1857,18 @@ function ExecutionView({
               <span>
                 Verification type{" "}
                 <strong>
-                  {titleCase(verification.verification_type)}
+                  {titleCase(
+                    verification.verification_type,
+                  )}
                 </strong>
               </span>
 
               <span>
                 Financial outcome{" "}
                 <strong>
-                  {verification.outcome_available ? "Available" : "Not evaluated"}
+                  {verification.outcome_available
+                    ? "Available"
+                    : "Not evaluated"}
                 </strong>
               </span>
             </div>
@@ -1181,12 +1878,16 @@ function ExecutionView({
 
       <div className="important-note">
         <AlertTriangle size={18} />
+
         <div>
           <strong>Important distinction</strong>
+
           <p>
-            Execution verification confirms that the dry-run matched the
-            approved action. It does <strong>not</strong> claim that money was
-            actually recovered or that a real-world financial outcome occurred.
+            Execution verification confirms that the
+            dry-run matched the approved action. It does
+            <strong> not</strong> claim that money was
+            actually recovered or that a real-world
+            financial outcome occurred.
           </p>
         </div>
       </div>
@@ -1208,16 +1909,28 @@ function TimelineStep({
   last?: boolean;
 }) {
   return (
-    <div className={`timeline-step ${complete ? "complete" : ""}`}>
+    <div
+      className={`timeline-step ${
+        complete ? "complete" : ""
+      }`}
+    >
       <div className="timeline-marker">
-        {complete ? <Check size={16} /> : stepNumber}
+        {complete ? (
+          <Check size={16} />
+        ) : (
+          stepNumber
+        )}
       </div>
 
       {!last && <div className="timeline-line" />}
 
       <div className="timeline-content">
-        <span className="step-number">STEP {stepNumber}</span>
+        <span className="step-number">
+          STEP {stepNumber}
+        </span>
+
         <h3>{title}</h3>
+
         <p>{description}</p>
       </div>
     </div>
@@ -1238,10 +1951,19 @@ function MetricCard({
   warning?: boolean;
 }) {
   return (
-    <div className={`metric-card ${negative ? "negative" : ""}`}>
+    <div
+      className={`metric-card ${
+        negative ? "negative" : ""
+      }`}
+    >
       <div className="metric-card-top">
         <span>{label}</span>
-        <div className={`metric-icon ${warning ? "warning" : ""}`}>
+
+        <div
+          className={`metric-icon ${
+            warning ? "warning" : ""
+          }`}
+        >
           {icon}
         </div>
       </div>
@@ -1288,7 +2010,9 @@ function PositionRow({
             ) : (
               <ArrowDownRight size={13} />
             )}
-            {Math.abs(trend * 100).toFixed(1)}% {trendLabel}
+
+            {Math.abs(trend * 100).toFixed(1)}%{" "}
+            {trendLabel}
           </span>
         )}
       </div>
@@ -1317,14 +2041,24 @@ function PanelHeader({
   );
 }
 
-function EmptyState({ onRetry }: { onRetry: () => void }) {
+function EmptyState({
+  onRetry,
+}: {
+  onRetry: () => void;
+}) {
   return (
     <div className="empty-state">
       <div className="empty-state-icon">
         <FileSpreadsheet size={28} />
       </div>
+
       <h2>FinSight is waiting for data</h2>
-      <p>Load the demo dataset or upload a financial CSV.</p>
+
+      <p>
+        Load the demo dataset or upload a financial
+        CSV.
+      </p>
+
       <button onClick={onRetry}>
         Load demo
         <ChevronRight size={17} />

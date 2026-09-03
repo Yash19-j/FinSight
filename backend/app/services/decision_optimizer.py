@@ -312,8 +312,27 @@ class DecisionOptimizer:
         improvement: float,
         baseline_value: float,
     ) -> float:
-        denominator = max(abs(baseline_value), 1.0)
-        return self._clamp(improvement / denominator, -1.0, 1.0)
+        """
+        Normalize a financial improvement without saturating large gains.
+
+        The denominator represents the larger financial scale between the
+        baseline and the resulting scenario. This preserves meaningful
+        differences between strong scenarios instead of making every large
+        improvement equal to 1.0.
+        """
+        scenario_value = baseline_value + improvement
+
+        denominator = max(
+            abs(baseline_value),
+            abs(scenario_value),
+            1.0,
+        )
+
+        return self._clamp(
+            improvement / denominator,
+            -1.0,
+            1.0,
+        )
 
     def _capital_penalty(
         self,
