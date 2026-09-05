@@ -2,15 +2,16 @@
 
 ### Financial Decision Intelligence with a Safety-Gated Action Layer
 
-## 🚀 Live Demo
+## 🚀 Live Prototype
 
 **[Open the Live FinSight Prototype](https://fin-sight-nu-weld.vercel.app)**
 
 > Upload financial data → simulate interventions → rank decisions → apply safety policy → execute or block.
 
 
+## Demo Video 
 
-
+**[Open the FinSight Video]([https://fin-sight-nu-weld.vercel.app](https://drive.google.com/file/d/1-O415bhgaGQe-HLHX2VCJGyv2Ip4Uui1/view?usp=drive_link))**
 
 
 > **FinSight doesn't just tell you what looks best. It decides whether that action is safe enough to take.**
