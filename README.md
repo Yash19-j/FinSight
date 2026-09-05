@@ -11,7 +11,7 @@
 
 ## Demo Video 
 
-**[Open the FinSight Video]([https://fin-sight-nu-weld.vercel.app](https://drive.google.com/file/d/1-O415bhgaGQe-HLHX2VCJGyv2Ip4Uui1/view?usp=drive_link))**
+**[Open the FinSight Video](https://drive.google.com/file/d/1-O415bhgaGQe-HLHX2VCJGyv2Ip4Uui1/view?usp=drive_link)**
 
 
 > **FinSight doesn't just tell you what looks best. It decides whether that action is safe enough to take.**
